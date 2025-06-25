@@ -1,0 +1,15 @@
+{
+  "id": "45b4c1cc-af75-49e6-93fa-8795ea618f01",
+  "created": "2025-06-23T18:38:16.520806+00:00",
+  "updated": "2025-06-23T18:38:16.520815+00:00",
+  "type": "todo",
+  "title": "Complete system testing",
+  "description": "Run comprehensive tests on the knowledge base system",
+  "priority": "high",
+  "status": "active",
+  "category": "task",
+  "tags": [],
+  "due_date": null,
+  "context": "@personal",
+  "completed_date": null
+}

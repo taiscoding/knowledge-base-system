@@ -1,0 +1,99 @@
+{
+  "PERSON": {
+    "created": "2025-06-23T23:25:06.829083",
+    "interactions": 4,
+    "contexts_seen": [
+      "review",
+      "paper",
+      "meeting",
+      "research",
+      "machine learning"
+    ],
+    "last_seen": "2025-06-23T23:26:26.317732",
+    "PERSON_intelligence": {
+      "PERSON_context": "academic collaborator, research colleague",
+      "PERSON_interaction_pattern": "regular work meetings, project discussions",
+      "PERSON_expertise": "machine learning research, paper recommendations"
+    }
+  },
+  "PERSON_TEST": {
+    "created": "2025-06-23T23:25:06.829776",
+    "interactions": 1,
+    "contexts_seen": [
+      "work",
+      "meeting"
+    ],
+    "last_seen": "2025-06-23T23:25:06.829779",
+    "PERSON_TEST_intelligence": {
+      "PERSON_TEST_context": "professional colleague, frequent collaborator",
+      "PERSON_TEST_interaction_pattern": "regular work meetings, project discussions"
+    }
+  },
+  "PERSON_PRIVACY": {
+    "created": "2025-06-23T23:25:06.829908",
+    "interactions": 1,
+    "contexts_seen": [
+      "confidential",
+      "project",
+      "meeting"
+    ],
+    "last_seen": "2025-06-23T23:25:06.829910",
+    "PERSON_PRIVACY_intelligence": {
+      "PERSON_PRIVACY_context": "professional colleague, frequent collaborator",
+      "PERSON_PRIVACY_interaction_pattern": "regular work meetings, project discussions"
+    }
+  },
+  "PERSON_001": {
+    "created": "2025-06-24T14:13:07.940040",
+    "interactions": 2,
+    "contexts_seen": [
+      "work",
+      "project",
+      "meeting"
+    ],
+    "last_seen": "2025-06-24T14:13:07.940399",
+    "PERSON_001_intelligence": {
+      "PERSON_001_context": "professional colleague, frequent collaborator",
+      "PERSON_001_interaction_pattern": "regular work meetings, project discussions"
+    }
+  },
+  "PROJECT_002": {
+    "created": "2025-06-24T14:13:07.940045",
+    "interactions": 2,
+    "contexts_seen": [
+      "work",
+      "project",
+      "meeting"
+    ],
+    "last_seen": "2025-06-24T14:13:07.940402",
+    "PROJECT_002_intelligence": {}
+  },
+  "DOCUMENT_001": {
+    "created": "2025-06-24T14:13:07.940551",
+    "interactions": 1,
+    "contexts_seen": [
+      "research",
+      "academic",
+      "paper"
+    ],
+    "last_seen": "2025-06-24T14:13:07.940554",
+    "DOCUMENT_001_intelligence": {
+      "DOCUMENT_001_type": "academic paper, research document",
+      "DOCUMENT_001_relevance": "high relevance to current research interests"
+    }
+  },
+  "PERSON_002": {
+    "created": "2025-06-24T14:13:07.940556",
+    "interactions": 1,
+    "contexts_seen": [
+      "research",
+      "academic",
+      "paper"
+    ],
+    "last_seen": "2025-06-24T14:13:07.940557",
+    "PERSON_002_intelligence": {
+      "PERSON_002_context": "academic collaborator, research colleague",
+      "PERSON_002_expertise": "machine learning research, paper recommendations"
+    }
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "bundle_id": "1969ac60-df4c-4e3c-9f70-b2956068c060",
+  "created": "2025-06-23T18:59:01.857358+00:00",
+  "format_version": "1.0",
+  "privacy_compliant": true,
+  "portable": true,
+  "content_items": [
+    {
+      "file_path": "data/journal/2025-06-23.md",
+      "content_type": "journal",
+      "content": "---\nid: a03a980e-a136-4089-b75a-560989c05303\ncreated: 2025-06-23T18:38:16.520270+00:00\ntype: journal\ndate: 2025-06-23\nmood: positive\nenergy: high\ntags: ['@work']\ncategory: personal\n---\n\n# 2025-06-23 - Journal Entry\n\nTesting the new knowledge base system. It's working great so far!\n",
+      "organizational_metadata": {
+        "auto_generated_tags": [],
+        "content_relationships": [],
+        "importance_score": 0.6,
+        "last_enhanced": "2025-06-23T18:59:01.855568+00:00"
+      }
+    },
+    {
+      "file_path": "data/calendar/event-2025-06-23-144923.json",
+      "content_type": "calendar",
+      "content": "{\n  \"id\": \"6abaf8bf-0131-437e-b446-6d26b579300a\",\n  \"created\": \"2025-06-23T18:49:23.691553+00:00\",\n  \"type\": \"calendar\",\n  \"title\": \"with the team next week\",\n  \"description\": \"\",\n  \"datetime\": \"2025-06-23T18:49:23.691556+00:00\",\n  \"duration\": \"60min\",\n  \"category\": \"meeting\",\n  \"tags\": [\n    \"calendar\"\n  ]\n}",
+      "organizational_metadata": {
+        "auto_generated_tags": [
+          "meeting"
+        ],
+        "content_relationships": [],
+        "importance_score": 0.6,
+        "last_enhanced": "2025-06-23T18:59:01.857137+00:00"
+      }
+    },
+    {
+      "file_path": "data/calendar/event-2025-06-23-143816.json",
+      "content_type": "calendar",
+      "content": "{\n  \"id\": \"83a3667f-30dc-4c67-8595-bc24e3606f76\",\n  \"created\": \"2025-06-23T18:38:16.515294+00:00\",\n  \"type\": \"calendar\",\n  \"title\": \"at 3\",\n  \"description\": \"\",\n  \"datetime\": \"2025-06-23T18:38:16.515317+00:00\",\n  \"duration\": \"60min\",\n  \"category\": \"meeting\",\n  \"tags\": [\n    \"calendar\"\n  ]\n}",
+      "organizational_metadata": {
+        "auto_generated_tags": [
+          "meeting"
+        ],
+        "content_relationships": [],
+        "importance_score": 0.6,
+        "last_enhanced": "2025-06-23T18:59:01.857150+00:00"
+      }
+    },
+    {
+      "file_path": "data/todos/todo-2025-06-23-143816.json",
+      "content_type": "todos",
+      "content": "{\n  \"id\": \"45b4c1cc-af75-49e6-93fa-8795ea618f01\",\n  \"created\": \"2025-06-23T18:38:16.520806+00:00\",\n  \"updated\": \"2025-06-23T18:38:16.520815+00:00\",\n  \"type\": \"todo\",\n  \"title\": \"Complete system testing\",\n  \"description\": \"Run comprehensive tests on the knowledge base system\",\n  \"priority\": \"high\",\n  \"status\": \"active\",\n  \"category\": \"task\",\n  \"tags\": [],\n  \"due_date\": null,\n  \"context\": \"@personal\",\n  \"completed_date\": null\n}",
+      "organizational_metadata": {
+        "auto_generated_tags": [],
+        "content_relationships": [],
+        "importance_score": 0.6,
+        "last_enhanced": "2025-06-23T18:59:01.857162+00:00"
+      }
+    },
+    {
+      "file_path": "data/todos/todo-2025-06-23-144923.json",
+      "content_type": "todos",
+      "content": "{\n  \"id\": \"64dbe947-cfad-402c-8d73-3b1f9a681e52\",\n  \"created\": \"2025-06-23T18:49:23.691291+00:00\",\n  \"type\": \"todo\",\n  \"title\": \"update my privacy settings in all my apps\",\n  \"description\": \"\",\n  \"priority\": \"low\",\n  \"status\": \"active\",\n  \"category\": \"task\",\n  \"tags\": [],\n  \"due_date\": null,\n  \"context\": \"@personal\"\n}",
+      "organizational_metadata": {
+        "auto_generated_tags": [],
+        "content_relationships": [],
+        "importance_score": 0.6,
+        "last_enhanced": "2025-06-23T18:59:01.857171+00:00"
+      }
+    }
+  ],
+  "organizational_metadata": {
+    "total_items": 5,
+    "content_types": [
+      "journal",
+      "todos",
+      "calendar"
+    ],
+    "creation_date": "2025-06-23T18:59:01.857386+00:00",
+    "enhanced_with_ai": true
+  }
+}

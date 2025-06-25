@@ -1,0 +1,21 @@
+{
+  "id": "${id}",
+  "created": "${created}",
+  "updated": "${updated}",
+  "type": "todo",
+  "title": "${title}",
+  "description": "${description}",
+  "priority": "${priority}",
+  "status": "active",
+  "category": "${category}",
+  "tags": ["${tags}"],
+  "due_date": "${due_date}",
+  "estimated_duration": "${estimated_duration}",
+  "context": "${context}",
+  "energy_required": "${energy_required}",
+  "dependencies": ["${dependencies}"],
+  "cross_refs": ["${cross_refs}"],
+  "notes": "${notes}",
+  "completed_date": null,
+  "subtasks": ["${subtasks}"]
+} 

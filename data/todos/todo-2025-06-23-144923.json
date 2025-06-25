@@ -1,0 +1,13 @@
+{
+  "id": "64dbe947-cfad-402c-8d73-3b1f9a681e52",
+  "created": "2025-06-23T18:49:23.691291+00:00",
+  "type": "todo",
+  "title": "update my privacy settings in all my apps",
+  "description": "",
+  "priority": "low",
+  "status": "active",
+  "category": "task",
+  "tags": [],
+  "due_date": null,
+  "context": "@personal"
+}

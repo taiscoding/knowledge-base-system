@@ -1,0 +1,74 @@
+# AI Tool Instructions for Knowledge Base System
+
+system_version: "1.0.0"
+last_updated: "2024-12-19"
+
+# Core Principles
+principles:
+  - "Always preserve user intent while organizing content intelligently"
+  - "Create cross-references automatically to build knowledge connections"
+  - "Use consistent metadata and tagging for searchability"
+  - "Maintain data integrity and version history"
+  - "Optimize for both human readability and AI processing"
+
+# Content Processing Rules
+content_processing:
+  stream_of_consciousness:
+    - "Extract key topics and themes automatically"
+    - "Identify actionable items and convert to todos"
+    - "Detect dates/times and create calendar entries if relevant"
+    - "Categorize based on content type and subject matter"
+    - "Generate relevant tags and cross-references"
+  
+  metadata_requirements:
+    - "id: unique identifier for each entry"
+    - "created: ISO 8601 timestamp"
+    - "updated: ISO 8601 timestamp of last modification"
+    - "type: content type (journal, todo, note, etc.)"
+    - "tags: array of relevant tags"
+    - "category: primary category"
+    - "priority: if applicable (high, medium, low)"
+    - "status: current status (active, completed, archived)"
+    - "cross_refs: references to related content"
+
+# File Naming Conventions
+naming_conventions:
+  journal: "YYYY-MM-DD.md"
+  todos: "todo-YYYY-MM-DD-HHMMSS.json"
+  calendar: "event-YYYY-MM-DD-HHMMSS.json"
+  notes: "note-YYYY-MM-DD-HHMMSS.md"
+  projects: "project-[slug].md"
+
+# Content Organization
+organization:
+  auto_categorization:
+    personal: ["feelings", "reflections", "relationships", "health"]
+    work: ["projects", "meetings", "deadlines", "professional"]
+    learning: ["research", "ideas", "education", "books", "articles"]
+    creative: ["writing", "art", "music", "design", "inspiration"]
+    practical: ["shopping", "tasks", "maintenance", "errands"]
+  
+  priority_detection:
+    urgent_keywords: ["urgent", "asap", "emergency", "deadline", "important"]
+    time_indicators: ["today", "tomorrow", "this week", "next week"]
+    action_verbs: ["need to", "must", "should", "remember to"]
+
+# Search and Query Guidelines
+search:
+  index_fields: ["content", "title", "tags", "category", "metadata"]
+  cross_reference_types: ["related_todos", "related_notes", "related_projects"]
+  context_window: "Include 3 most recent related entries for context"
+
+# Update Protocols
+updates:
+  versioning: "Keep original with .backup extension before modifying"
+  cross_refs: "Update all related entries when content changes"
+  indexes: "Rebuild search indexes after bulk changes"
+  consistency_checks: "Verify data integrity after updates"
+
+# Response Guidelines
+responses:
+  query_format: "Provide direct answer followed by related information"
+  context_inclusion: "Always include relevant cross-references"
+  suggestion_mode: "Offer related queries and content when helpful"
+  confidence_indication: "Indicate uncertainty when information is incomplete" 

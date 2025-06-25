@@ -1,0 +1,96 @@
+# Naming Conventions and Data Standards
+
+# File Naming Patterns
+file_naming:
+  journal:
+    pattern: "YYYY-MM-DD.md"
+    example: "2024-12-19.md"
+    description: "Daily journal entries with ISO date format"
+  
+  todos:
+    pattern: "todo-YYYY-MM-DD-HHMMSS.json" 
+    example: "todo-2024-12-19-143022.json"
+    description: "Individual task items with creation timestamp"
+  
+  calendar:
+    pattern: "event-YYYY-MM-DD-HHMMSS.json"
+    example: "event-2024-12-19-143022.json"
+    description: "Calendar events with creation timestamp"
+  
+  notes:
+    pattern: "note-YYYY-MM-DD-HHMMSS.md"
+    example: "note-2024-12-19-143022.md"
+    description: "General notes with creation timestamp"
+  
+  projects:
+    pattern: "project-[slug].md"
+    example: "project-knowledge-base.md"
+    description: "Project files with descriptive slug"
+
+# Standard Metadata Schema
+metadata_schema:
+  required_fields:
+    - id: "Unique identifier (UUID preferred)"
+    - created: "ISO 8601 timestamp"
+    - type: "Content type from allowed list"
+    - title: "Human-readable title"
+  
+  optional_fields:
+    - updated: "Last modification timestamp"
+    - tags: "Array of string tags"
+    - category: "Primary category"
+    - priority: "Priority level (high/medium/low)"
+    - status: "Current status"
+    - due_date: "Due date for time-sensitive items"
+    - cross_refs: "References to related content"
+    - mood: "Emotional context (for journal entries)"
+    - energy: "Energy level (for personal tracking)"
+
+# Content Types
+content_types:
+  allowed:
+    - journal
+    - todo
+    - calendar
+    - note
+    - project
+    - reference
+    - idea
+    - meeting
+    - reflection
+
+# Tagging System
+tagging:
+  categories:
+    context: ["@home", "@work", "@personal", "@urgent"]
+    topics: ["#project", "#idea", "#learning", "#health", "#finance"]
+    people: ["+person-name"]
+    projects: ["&project-name"]
+  
+  auto_tags:
+    time_based: ["morning", "evening", "weekend", "weekday"]
+    mood_based: ["positive", "negative", "neutral", "excited", "stressed"]
+    priority_based: ["urgent", "important", "routine", "someday"]
+
+# Cross-Reference Format
+cross_references:
+  format: "[type:id:title]"
+  examples:
+    - "[todo:uuid-123:Complete project proposal]"
+    - "[note:uuid-456:Research findings on AI]"
+    - "[project:knowledge-base:Knowledge Base System]"
+
+# Search Index Structure
+search_indexes:
+  primary: "Full-text search across all content"
+  by_type: "Separate indexes for each content type"
+  by_tag: "Tag-based organization"
+  by_date: "Chronological organization"
+  by_priority: "Priority-based sorting"
+
+# Data Consistency Rules
+consistency:
+  id_format: "UUID v4 preferred, fallback to timestamp-based"
+  date_format: "ISO 8601 (YYYY-MM-DDTHH:MM:SSZ)"
+  tag_format: "lowercase, no spaces, use hyphens"
+  title_format: "Title case, descriptive, under 100 characters" 
