@@ -1,36 +1,36 @@
 # Architecture Overview
 
-This document provides a high-level overview of the Knowledge Base & Token Intelligence System architecture, with a focus on the integration between components and privacy-preserving design.
+This document provides a high-level overview of the Knowledge Base & Token Intelligence System architecture, with a focus on the privacy-preserving design.
 
 ## System Components
 
-The system consists of three main components:
+The system consists of two main components with integrated privacy features:
 
-1. **Knowledge Base Manager**: Organizes and processes content, extracts information, and handles storage
+1. **Knowledge Base Manager**: Organizes and processes content, extracts information, handles storage, and includes integrated privacy functionality
 2. **Token Intelligence System**: Generates insights from tokenized content without accessing original data
-3. **Sankofa Privacy Layer**: Handles tokenization of sensitive information and protects privacy
 
 ## Component Architecture
 
 ### Knowledge Base Manager
 
 ```
-┌─────────────────────────────────────────┐
-│           Knowledge Base Manager        │
-├─────────────┬───────────────────────────┤
-│             │                           │
-│  Manager    │  Content Types            │
-│             │  - Note                   │
-├─────────────┤  - Todo                   │
-│             │  - CalendarEvent          │
-│  Utils      │  - Project                │
-│             │  - Reference              │
-└─────────────┴───────────────────────────┘
+┌───────────────────────────────────────────────────────┐
+│                Knowledge Base Manager                 │
+├─────────────┬───────────────────────┬─────────────────┤
+│             │                       │                 │
+│  Manager    │  Content Types        │  Privacy        │
+│             │  - Note               │  - Engine       │
+├─────────────┤  - Todo               │  - Session Mgr  │
+│             │  - CalendarEvent      │  - TokenBridge  │
+│  Utils      │  - Project            │                 │
+│             │  - Reference          │                 │
+└─────────────┴───────────────────────┴─────────────────┘
 ```
 
 - **Manager**: Core class that handles content processing and organization
 - **Content Types**: Data classes for different types of content
 - **Utils**: Configuration, helpers, and utility functions
+- **Privacy**: Integrated privacy components for anonymization and session management
 
 ### Token Intelligence System
 
@@ -55,84 +55,72 @@ The system consists of three main components:
 - **Storage**: Token profile and relationship storage
 - **Utils**: Configuration, logging, validation
 
-### Sankofa Privacy Layer
-
-```
-┌─────────────────────────────────────────┐
-│            Sankofa Privacy Layer        │
-├─────────────┬───────────────┬───────────┤
-│             │               │           │
-│ Tokenization│  Mapping      │ Validation│
-│             │               │           │
-└─────────────┴───────────────┴───────────┘
-```
-
-- **Tokenization**: Replaces sensitive data with tokens
-- **Mapping**: Maintains mappings between tokens and original data
-- **Validation**: Ensures privacy is maintained
-
 ## Data Flow
 
 The complete data flow through the system:
 
 ```mermaid
 sequenceDiagram
-    User->>Privacy Layer: Original Content
-    Privacy Layer->>Knowledge Base: Tokenized Content
-    Knowledge Base->>Storage: Save Content
+    User->>Knowledge Base: Original Content
+    Knowledge Base->>Knowledge Base: Privacy Processing
+    Note over Knowledge Base: Tokenizes sensitive data
+    Knowledge Base->>Storage: Save Tokenized Content
     Knowledge Base->>Token Intelligence: Tokenized Text
     Token Intelligence->>Token Intelligence: Generate Insights
     Token Intelligence->>Knowledge Base: Token Intelligence
-    Knowledge Base->>Privacy Layer: Enhanced Content (still tokenized)
-    Privacy Layer->>User: Enhanced Original Content
+    Knowledge Base->>Knowledge Base: Enhance Content (still tokenized)
+    Note over Knowledge Base: De-tokenizes content
+    Knowledge Base->>User: Enhanced Original Content
 ```
 
 1. User creates content with sensitive information
-2. Privacy Layer tokenizes sensitive information
+2. Knowledge Base tokenizes sensitive information through integrated privacy engine
 3. Knowledge Base processes and organizes tokenized content
 4. Token Intelligence analyzes tokens and generates insights
 5. Knowledge Base enhances content with token intelligence
-6. Privacy Layer de-tokenizes content before returning to user
+6. Knowledge Base de-tokenizes content before returning to user
 
 ## Integration Points
 
 ### Knowledge Base to Token Intelligence
 
-The Knowledge Base sends tokenized content to the Token Intelligence system:
+The Knowledge Base communicates with the Token Intelligence system through the TokenIntelligenceBridge:
 
 ```python
 # Knowledge Base extracts tokenized text
 tokenized_text = "Meeting with [PERSON_001] about [PROJECT_002]"
 
-# Create Token Intelligence request
-request = TokenIntelligenceRequest(
+# Create Token Intelligence request through the bridge
+token_intelligence = token_intelligence_bridge.generate_intelligence(
     privacy_text=tokenized_text,
-    preserved_context=extracted_context,
-    session_id="session-123"
+    session_id=session_id,
+    preserved_context=context_keywords,
+    entity_relationships=relationships
 )
-
-# Get intelligence
-response = engine.generate_intelligence(request)
 
 # Use intelligence to enhance content
 enhanced_content = original_content
-for token, insight in response.intelligence.items():
+for token, insight in token_intelligence.items():
     enhanced_content = apply_insight(enhanced_content, token, insight)
 ```
 
-### Privacy Layer Integration
+### Privacy Integration
 
-The Knowledge Base integrates with the Privacy Layer through the Privacy Integration module:
+The privacy functionality is now integrated directly into the Knowledge Base:
 
 ```python
-# Import content through the Privacy Layer
-result = privacy_integration.import_privacy_bundle("bundle.json")
+# Process content with privacy
+result = knowledge_base.process_with_privacy(
+    content="Call John Smith about the project tomorrow",
+    session_id="session-123",
+    privacy_level="balanced"
+)
 
-# Export content through the Privacy Layer
-export_result = privacy_integration.export_to_privacy_bundle()
-
-# Process streaming content
-result = privacy_integration.process_privacy_stream(stream_data)
+# Process and generate a response with automatic privacy handling
+response = knowledge_base.process_and_respond(
+    content="Schedule a meeting with Susan Jones",
+    session_id="session-123"
+)
 ```
 
 ## Memory Model
@@ -148,10 +136,18 @@ result = privacy_integration.process_privacy_stream(stream_data)
 └───────┬───────┘           └───────┬───────┘
         │                           │
         v                           v
-┌───────────────┐           ┌───────────────┐
-│ Knowledge Base│<--------->│Token           │
-│ Manager       │           │Intelligence   │
-└───────────────┘           └───────────────┘
+┌───────────────────────────────┐   │
+│                               │   │
+│ Knowledge Base Manager        │◄──┘
+│ (with integrated privacy)     │
+│                               │
+└──────────────┬────────────────┘
+               │
+               │
+        ┌──────▼──────┐
+        │     UI      │
+        │             │
+        └─────────────┘
 ```
 
 - **Content Store**: Persists content and metadata
@@ -160,28 +156,31 @@ result = privacy_integration.process_privacy_stream(stream_data)
 
 ## Privacy Architecture
 
-Privacy is the core architectural principle:
+Privacy is built directly into the Knowledge Base Manager:
 
-1. **Tokenization Boundary**: Sensitive data never crosses the tokenization boundary
-2. **Perfect Token Isolation**: Token Intelligence only ever sees tokens, never original data
-3. **Session Maintenance**: The system maintains consistent token mapping within sessions
-4. **Privacy Validation**: All operations are validated for privacy compliance
+1. **Integrated Privacy Engine**: Handles tokenization and de-tokenization
+2. **Session Manager**: Maintains privacy sessions for consistent tokenization
+3. **Token Intelligence Bridge**: Connects to Token Intelligence with fallback capabilities
+4. **Perfect Token Isolation**: Token Intelligence only ever sees tokens, never original data
+5. **Privacy Validation**: All operations are validated for privacy compliance
 
 ## API Architecture
 
-The system exposes two separate but complementary APIs:
+The system exposes a unified API with privacy-aware endpoints:
 
 ```
-┌─────────────────────┐     ┌─────────────────────┐
-│ Knowledge Base API  │     │Token Intelligence API│
-├─────────────────────┤     ├─────────────────────┤
-│/process_content     │     │/analyze_tokens      │
-│/search              │     │/analyze_batch       │
-│/organize            │     │/health              │
-└─────────────────────┘     └─────────────────────┘
+┌───────────────────────────────┐     
+│ Knowledge Base API            │     
+├───────────────────────────────┤     
+│/process                       │     
+│/process-private               │     
+│/search                        │     
+│/conversation                  │     
+│/sessions                      │     
+└───────────────────────────────┘     
 ```
 
-Both APIs can be used independently or together, depending on the use case.
+All API endpoints automatically handle privacy when needed.
 
 ## Configuration Architecture
 
@@ -194,7 +193,7 @@ The system uses a hierarchical configuration system:
 ## Technical Stack
 
 - **Language**: Python 3.8+
-- **API**: Flask
+- **API**: FastAPI
 - **Storage**: File-based with JSON and Markdown
 - **Configuration**: YAML
 - **Packaging**: Standard Python packaging 

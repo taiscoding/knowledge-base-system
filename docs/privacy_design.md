@@ -1,40 +1,46 @@
 # Privacy Design: How We Protect Your Data
 
-This document explains how our system protects your privacy through innovative token-based intelligence and the Sankofa privacy layer integration.
+This document explains how our system protects your privacy through innovative token-based intelligence and the integrated privacy functionality within the Knowledge Base system.
 
 ## Privacy by Design
 
-The Knowledge Base & Token Intelligence System was built from the ground up with privacy as a core principle. Instead of trying to add privacy to an existing system, we designed our architecture around privacy protection from the beginning.
+The Knowledge Base System was built from the ground up with privacy as a core principle. Instead of trying to add privacy to an existing system, we designed our architecture around privacy protection from the beginning.
 
 ## Privacy Architecture
 
 ```mermaid
 graph TD
-    A[User Data] -->|Tokenization| B[Sankofa Privacy Layer]
-    B -->|Privacy Tokens| C[Knowledge Base]
-    C -->|Privacy Tokens| D[Token Intelligence]
-    D -->|Token Intelligence| C
-    C -->|Enhanced Tokens| B
-    B -->|Privacy-Preserved Data| E[User]
+    A[User Content] -->|Tokenization| B[Privacy Engine]
+    B -->|Tokenized Content| C[Knowledge Base Manager]
     
-    subgraph "Private User Environment"
-    A
+    C -->|Organization & Storage| D[Knowledge Base]
+    C -->|Privacy-Safe Tokens| E[Token Intelligence Bridge]
+    E -->|Token Requests| F[Token Intelligence Engine]
+    
+    F -->|Token Intelligence| E
+    E -->|Enhanced Content| C
+    C -->|De-anonymized Response| A
+    
+    subgraph "Knowledge Base System"
     B
+    C
+    D
     E
     end
     
-    subgraph "Zero-Knowledge System"
-    C
-    D
+    subgraph "Token Intelligence"
+    F
     end
     
-    classDef private fill:#f9f,stroke:#333,stroke-width:2px
-    classDef zeroknowledge fill:#bbf,stroke:#333,stroke-width:2px
-    class A,B,E private
-    class C,D zeroknowledge
+    classDef privacy fill:#f9f,stroke:#333,stroke-width:2px
+    classDef knowledge fill:#bbf,stroke:#333,stroke-width:2px
+    classDef intel fill:#fdb,stroke:#333,stroke-width:2px
+    class A,B privacy
+    class C,D knowledge
+    class E,F intel
 ```
 
-## The Privacy Layer Approach
+## The Integrated Privacy Approach
 
 ### How Traditional Systems Work
 
@@ -47,10 +53,10 @@ In traditional systems, your personal data is:
 ### How Our System Works
 
 Our approach is fundamentally different:
-1. Your data is **immediately tokenized** - sensitive information is replaced with privacy tokens
+1. Your data is **immediately tokenized** by the integrated Privacy Engine
 2. Only these anonymous tokens are processed by our intelligence system
 3. The system **never sees** the original sensitive information
-4. The privacy layer (Sankofa) maintains the mapping between tokens and real data
+4. The Knowledge Base maintains the mapping between tokens and real data
 
 ## What Are Privacy Tokens?
 
@@ -83,7 +89,7 @@ We can make the following guarantees about your data:
 
 ### 2. Perfect Token Isolation
 - All operations work exclusively with tokens
-- Token mappings are maintained only in the Sankofa Privacy Layer
+- Token mappings are maintained only in the Privacy Engine
 - Intelligence is generated without knowledge of what the tokens represent
 
 ### 3. Session Isolation
@@ -106,25 +112,38 @@ Here's how data flows through the system with privacy protection:
 
 ```mermaid
 sequenceDiagram
-    User->>Sankofa: "Meet Dr. Smith about diabetes"
-    Note over Sankofa: Tokenizes sensitive data
-    Sankofa->>Knowledge Base: "Meet [PHYSICIAN_001] about [CONDITION_001]"
-    Knowledge Base->>Token Intelligence: "Meet [PHYSICIAN_001] about [CONDITION_001]"
+    User->>Knowledge Base: "Meet Dr. Smith about diabetes"
+    Note over Knowledge Base: Privacy Engine tokenizes data
+    Knowledge Base->>Knowledge Base: "Meet [PHYSICIAN_001] about [CONDITION_001]"
+    Knowledge Base->>Token Intelligence Bridge: "Meet [PHYSICIAN_001] about [CONDITION_001]"
+    Token Intelligence Bridge->>Token Intelligence: "Meet [PHYSICIAN_001] about [CONDITION_001]"
     Note over Token Intelligence: Analyzes tokens only
-    Token Intelligence->>Knowledge Base: "[PHYSICIAN_001] specializes in [CONDITION_001]"
-    Knowledge Base->>Sankofa: "Meet [PHYSICIAN_001] (specializes in [CONDITION_001]) about [CONDITION_001]"
-    Note over Sankofa: De-tokenizes data
-    Sankofa->>User: "Meet Dr. Smith (specializes in diabetes) about diabetes"
+    Token Intelligence->>Token Intelligence Bridge: "[PHYSICIAN_001] specializes in [CONDITION_001]"
+    Note over Token Intelligence Bridge: Fault tolerance handling
+    Token Intelligence Bridge->>Knowledge Base: "[PHYSICIAN_001] specializes in [CONDITION_001]"
+    Knowledge Base->>Knowledge Base: "Meet [PHYSICIAN_001] (specializes in [CONDITION_001]) about [CONDITION_001]"
+    Note over Knowledge Base: Privacy Engine de-tokenizes
+    Knowledge Base->>User: "Meet Dr. Smith (specializes in diabetes) about diabetes"
 ```
 
 ## Technical Implementation
 
 For technically-minded readers, the privacy protection works through:
 
-1. **Token Extraction**: Privacy tokens are identified using pattern matching
-2. **Context Preservation**: Non-sensitive context words are preserved
-3. **Intelligence Generation**: Algorithms work exclusively with tokens and context
-4. **Token Response Formatting**: Intelligence is attached to tokens, not original data
+1. **Integrated Privacy Engine**: Core privacy component that handles tokenization
+2. **Session Manager**: Manages privacy sessions for consistent tokenization
+3. **Token Intelligence Bridge**: Provides fault-tolerant connection to intelligence
+4. **Smart Anonymization**: Detects and tokenizes different types of sensitive information
+5. **Entity Relationship Detection**: Identifies relationships between tokens
+
+### Token Intelligence Bridge
+
+The Token Intelligence Bridge provides several important capabilities:
+
+1. **Fault Tolerance**: Continues functioning even if the Token Intelligence system is unavailable
+2. **Graceful Degradation**: Provides basic intelligence even without the full intelligence system
+3. **Dependency Management**: Automatically detects if Token Intelligence is available
+4. **Error Handling**: Captures and isolates errors from the intelligence system
 
 ## Privacy Testing and Validation
 
@@ -139,10 +158,11 @@ The system includes dedicated privacy validation that:
 
 We believe in transparency and invite you to verify our privacy claims:
 
-1. Review the Privacy Validator implementation in `knowledge_base/privacy.py`
-2. Examine our privacy tests in the `tests/` directory
-3. Inspect token processing in `token_intelligence/core/token_extractor.py`
-4. Run the system in debug mode to trace data flows
+1. Review the Privacy Engine implementation in `knowledge_base/privacy/smart_anonymization.py`
+2. Examine the Session Manager in `knowledge_base/privacy/session_manager.py`
+3. Check the Token Intelligence Bridge in `knowledge_base/privacy/token_intelligence_bridge.py`
+4. Inspect token processing in `token_intelligence/core/token_extractor.py`
+5. Run the system in debug mode to trace data flows
 
 ## Further Reading
 
@@ -150,4 +170,4 @@ For more technical details on our privacy implementation, see:
 
 - [Architecture Overview](architecture_overview.md) - System design with privacy boundaries
 - [Integration Guide](integration_guide.md) - How to integrate while maintaining privacy
-- [Privacy Layer API](../token_intelligence/api/endpoints.py) - API implementation with privacy safeguards 
+- [Knowledge Base API](../scripts/api_server.py) - API implementation with privacy safeguards 

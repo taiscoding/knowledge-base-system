@@ -1,15 +1,15 @@
-# Token Intelligence API Documentation
+# Knowledge Base API Documentation
 
-*Last updated: June 23, 2025*
+*Last updated: June 26, 2025*
 
 ## Overview
 
-The Token Intelligence System provides a REST API for privacy-preserving token-based intelligence generation. This document outlines the available endpoints, request/response formats, and usage examples.
+The Knowledge Base System provides a REST API for content management with built-in privacy features. This document outlines the available endpoints, request/response formats, and usage examples.
 
 ## Base URL
 
 ```
-http://localhost:5000
+http://localhost:8000
 ```
 
 For production deployments, replace with your actual server URL.
@@ -22,44 +22,155 @@ Authentication is not implemented in the core API but should be added in product
 
 ### Health Check
 
-**GET /health**
+**GET /**
 
 Returns the current status of the API service.
 
 **Response**
 ```json
 {
-  "status": "healthy",
-  "service": "token_intelligence_api",
-  "timestamp": "2025-06-23T14:32:45.123456",
-  "version": "1.0.0"
+  "name": "Knowledge Base with Integrated Privacy API",
+  "version": "1.0.0",
+  "docs_url": "/docs"
 }
 ```
 
-### Single Request Processing
+### Process Content (Without Privacy)
 
-**POST /analyze_privacy_tokens**
+**POST /process**
 
-Process a single token intelligence request.
+Process a text input without privacy features.
 
 **Request Body**
 ```json
 {
-  "privacy_text": "Meeting with [PERSON_001] about [PROJECT_002]",
-  "session_id": "uuid-12345",
-  "preserved_context": ["meeting", "project", "discussion"],
-  "entity_relationships": {
-    "[PERSON_001]": {
-      "type": "person",
-      "linked_entities": ["[PROJECT_002]"]
-    },
-    "[PROJECT_002]": {
-      "type": "project",
-      "belongs_to": "[PERSON_001]"
-    }
+  "content": "Call John Smith tomorrow about the project status."
+}
+```
+
+**Response**
+```json
+{
+  "original_content": "Call John Smith tomorrow about the project status.",
+  "processed_items": [],
+  "extracted_info": {
+    "todos": [
+      {
+        "title": "Call John Smith tomorrow about the project status",
+        "description": "",
+        "priority": "medium",
+        "status": "active",
+        "category": "task",
+        "tags": ["@work"],
+        "due_date": "2025-06-27",
+        "context": "@work",
+        "id": "c58f9a2e-19af-4f5c-802b-d0a3739a32d0",
+        "created": "2025-06-26T13:45:32.123456+00:00",
+        "last_modified": "2025-06-26T13:45:32.123456+00:00"
+      }
+    ],
+    "calendar_events": [],
+    "notes": [],
+    "tags": ["@work"],
+    "categories": ["work"],
+    "cross_refs": []
+  }
+}
+```
+
+### Process with Privacy
+
+**POST /process-private**
+
+Process text with privacy preservation.
+
+**Request Body**
+```json
+{
+  "content": "Call John Smith tomorrow about the project status.",
+  "session_id": "c2ba9bef-1feb-4c6e-b5dc-f715b8cff37f",
+  "privacy_level": "balanced"
+}
+```
+
+**Response**
+```json
+{
+  "original_content": "[PERSON_001] tomorrow about the project status.",
+  "processed_items": [],
+  "extracted_info": {
+    "todos": [
+      {
+        "title": "[PERSON_001] tomorrow about the project status",
+        "description": "",
+        "priority": "medium",
+        "status": "active",
+        "category": "task",
+        "tags": ["@work"],
+        "due_date": "2025-06-27",
+        "context": "@work",
+        "id": "a7b4c8d9-2e3f-4a5b-8c9d-1e2f3a4b5c6d",
+        "created": "2025-06-26T13:45:32.123456+00:00",
+        "last_modified": "2025-06-26T13:45:32.123456+00:00",
+        "privacy_safe": true
+      }
+    ],
+    "calendar_events": [],
+    "notes": [],
+    "tags": ["@work"],
+    "categories": ["work"],
+    "cross_refs": []
   },
+  "privacy": {
+    "session_id": "c2ba9bef-1feb-4c6e-b5dc-f715b8cff37f",
+    "privacy_level": "balanced",
+    "tokens": {
+      "PERSON_001": "Call John Smith"
+    },
+    "is_anonymized": true
+  }
+}
+```
+
+### Search Content
+
+**POST /search**
+
+Search across knowledge base content.
+
+**Request Body**
+```json
+{
+  "query": "project",
+  "content_type": "todo"
+}
+```
+
+**Response**
+```json
+{
+  "results": [
+    {
+      "file": "data/todos/todo-2025-06-26-134532.json",
+      "type": "todo",
+      "content_preview": "{\"title\": \"Call John Smith tomorrow about the project status\", \"description\": \"\", \"priority\": \"medium\", \"status\": \"active\", \"category\": \"task\", \"..."
+    }
+  ]
+}
+```
+
+### Create Session
+
+**POST /sessions**
+
+Create a new privacy session.
+
+**Request Body**
+```json
+{
+  "privacy_level": "balanced",
   "metadata": {
-    "application": "knowledge_base",
+    "application": "mobile_app",
     "user_context": "work"
   }
 }
@@ -68,93 +179,100 @@ Process a single token intelligence request.
 **Response**
 ```json
 {
-  "intelligence": {
-    "PERSON_001_context": "professional colleague, frequent collaborator",
-    "PERSON_001_interaction_pattern": "regular work meetings, project discussions",
-    "PROJECT_002_status": "active project, requires attention"
-  },
-  "confidence": 0.85,
-  "intelligence_type": "professional_collaboration",
-  "source": "knowledge_base_analysis",
-  "processing_time_ms": 2
+  "session_id": "c2ba9bef-1feb-4c6e-b5dc-f715b8cff37f",
+  "privacy_level": "balanced",
+  "message": "Created new privacy session: c2ba9bef-1feb-4c6e-b5dc-f715b8cff37f"
 }
 ```
 
-### Batch Request Processing
+### Get Session
 
-**POST /analyze_privacy_tokens_batch**
+**GET /sessions/{session_id}**
 
-Process multiple token intelligence requests efficiently in a single call.
+Get details about a specific session.
+
+**Response**
+```json
+{
+  "created_at": "2025-06-26T13:42:15.123456",
+  "last_used": "2025-06-26T13:45:32.123456",
+  "privacy_level": "balanced",
+  "token_mappings": {
+    "PERSON_001": "Call John Smith"
+  },
+  "entity_relationships": {
+    "PERSON_001": {
+      "type": "PERSON",
+      "linked_entities": []
+    }
+  },
+  "preserved_context": ["call", "project", "status"],
+  "metadata": {
+    "application": "mobile_app",
+    "user_context": "work"
+  }
+}
+```
+
+### Conversation
+
+**POST /conversation**
+
+Process content with privacy and generate intelligent response.
 
 **Request Body**
 ```json
 {
-  "requests": [
-    {
-      "privacy_text": "Meeting with [PERSON_001] about [PROJECT_002]",
-      "session_id": "uuid-12345",
-      "preserved_context": ["meeting", "project"],
-      "entity_relationships": {
-        "[PERSON_001]": {"type": "person", "linked_entities": ["[PROJECT_002]"]},
-        "[PROJECT_002]": {"type": "project", "belongs_to": "[PERSON_001]"}
-      }
-    },
-    {
-      "privacy_text": "Call [PHYSICIAN_001] about [CONDITION_001]",
-      "session_id": "uuid-12345",
-      "preserved_context": ["call", "medical"],
-      "entity_relationships": {
-        "[PHYSICIAN_001]": {"type": "physician"},
-        "[CONDITION_001]": {"type": "condition"}
-      }
-    }
-  ],
-  "batch_id": "batch-12345",
-  "session_id": "uuid-12345",
-  "metadata": {
-    "priority": "high",
-    "source": "mobile_app"
-  }
+  "message": "Call John Smith tomorrow about the project status.",
+  "session_id": "c2ba9bef-1feb-4c6e-b5dc-f715b8cff37f"
 }
 ```
 
 **Response**
 ```json
 {
-  "responses": [
-    {
-      "intelligence": {
-        "PERSON_001_context": "professional colleague, frequent collaborator",
-        "PROJECT_002_status": "active project, requires attention"
-      },
-      "confidence": 0.85,
-      "intelligence_type": "professional_collaboration",
-      "source": "knowledge_base_analysis",
-      "processing_time_ms": 1
+  "original_content": "[PERSON_001] tomorrow about the project status.",
+  "processed_items": [],
+  "extracted_info": {
+    "todos": [
+      {
+        "title": "[PERSON_001] tomorrow about the project status",
+        "description": "",
+        "priority": "medium",
+        "status": "active",
+        "category": "task",
+        "tags": ["@work"],
+        "due_date": "2025-06-27",
+        "context": "@work",
+        "id": "a7b4c8d9-2e3f-4a5b-8c9d-1e2f3a4b5c6d",
+        "created": "2025-06-26T13:45:32.123456+00:00",
+        "last_modified": "2025-06-26T13:45:32.123456+00:00",
+        "privacy_safe": true
+      }
+    ],
+    "calendar_events": [],
+    "notes": [],
+    "tags": ["@work"],
+    "categories": ["work"],
+    "cross_refs": []
+  },
+  "privacy": {
+    "session_id": "c2ba9bef-1feb-4c6e-b5dc-f715b8cff37f",
+    "privacy_level": "balanced",
+    "tokens": {
+      "PERSON_001": "Call John Smith"
     },
-    {
-      "intelligence": {
-        "PHYSICIAN_001_specialization": "specializes in condition management",
-        "PHYSICIAN_001_visit_frequency": "3 visits in past month"
-      },
-      "confidence": 0.78,
-      "intelligence_type": "medical_healthcare",
-      "source": "knowledge_base_analysis",
-      "processing_time_ms": 2
-    }
-  ],
-  "batch_id": "batch-12345",
-  "total_processing_time_ms": 5,
-  "batch_size": 2,
-  "success_count": 2,
-  "error_count": 0,
-  "batch_intelligence_summary": {
-    "unique_tokens_processed": 4,
-    "token_types_seen": ["PERSON", "PROJECT", "PHYSICIAN", "CONDITION"],
-    "intelligence_types_generated": ["professional_collaboration", "medical_healthcare"],
-    "batch_patterns": {
-      "context_diversity": 2
-    }
+    "is_anonymized": true
+  },
+  "response": {
+    "message": "I've added 1 task(s) to your to-do list. Is there anything else you need help with regarding this?",
+    "suggestions": [
+      {
+        "type": "todo_followup",
+        "text": "Would you like to set a reminder for this task?",
+        "action": "set_reminder"
+      }
+    ]
   }
 }
 ```
@@ -164,24 +282,21 @@ Process multiple token intelligence requests efficiently in a single call.
 **Validation Error**
 ```json
 {
-  "intelligence": {},
-  "confidence": 0.0,
-  "intelligence_type": "error",
-  "source": "knowledge_base_analysis",
-  "processing_time_ms": 0,
-  "error": "Missing required field: preserved_context"
+  "detail": "Missing required field: content"
+}
+```
+
+**Not Found Error**
+```json
+{
+  "detail": "Session c2ba9bef-1feb-4c6e-b5dc-f715b8cff37f not found"
 }
 ```
 
 **Server Error**
 ```json
 {
-  "intelligence": {},
-  "confidence": 0.0,
-  "intelligence_type": "error",
-  "source": "knowledge_base_analysis",
-  "processing_time_ms": 0,
-  "error": "Internal server error"
+  "detail": "Processing failed: Internal server error"
 }
 ```
 
@@ -192,88 +307,107 @@ import requests
 import json
 
 # API endpoint
-API_URL = "http://localhost:5000"
+API_URL = "http://localhost:8000"
 
-# Single request example
-def process_single_request():
-    request_data = {
-        "privacy_text": "Meeting with [PERSON_001] about [PROJECT_002]",
-        "session_id": "test-session",
-        "preserved_context": ["meeting", "project"],
-        "entity_relationships": {
-            "[PERSON_001]": {"type": "person", "linked_entities": ["[PROJECT_002]"]},
-            "[PROJECT_002]": {"type": "project", "belongs_to": "[PERSON_001]"}
-        }
-    }
-    
-    response = requests.post(
-        f"{API_URL}/analyze_privacy_tokens", 
-        json=request_data
+# Process with privacy example
+def process_with_privacy():
+    # First create a session
+    session_response = requests.post(
+        f"{API_URL}/sessions",
+        json={"privacy_level": "balanced"}
     )
     
-    if response.status_code == 200:
-        result = response.json()
-        print("Intelligence:", json.dumps(result["intelligence"], indent=2))
-        print(f"Confidence: {result['confidence']}")
-        print(f"Type: {result['intelligence_type']}")
-        print(f"Processing time: {result['processing_time_ms']}ms")
-    else:
-        print(f"Error: {response.status_code}")
-        print(response.text)
-
-# Batch request example
-def process_batch_request():
-    batch_data = {
-        "requests": [
-            {
-                "privacy_text": "Meeting with [PERSON_001]",
-                "session_id": "batch-test",
-                "preserved_context": ["meeting"],
-                "entity_relationships": {"[PERSON_001]": {"type": "person"}}
-            },
-            {
-                "privacy_text": "Call [PHYSICIAN_001] about [CONDITION_001]",
-                "session_id": "batch-test",
-                "preserved_context": ["call", "medical"],
-                "entity_relationships": {
-                    "[PHYSICIAN_001]": {"type": "physician"},
-                    "[CONDITION_001]": {"type": "condition"}
-                }
-            }
-        ],
-        "batch_id": "test-batch",
-        "session_id": "batch-parent"
-    }
-    
-    response = requests.post(
-        f"{API_URL}/analyze_privacy_tokens_batch", 
-        json=batch_data
-    )
-    
-    if response.status_code == 200:
-        result = response.json()
-        print(f"Processed {result['batch_size']} requests")
-        print(f"Success: {result['success_count']}, Errors: {result['error_count']}")
-        print(f"Total processing time: {result['total_processing_time_ms']}ms")
+    if session_response.status_code == 200:
+        session_data = session_response.json()
+        session_id = session_data["session_id"]
         
-        # Print individual responses
-        for i, resp in enumerate(result["responses"]):
-            print(f"\nResponse {i+1}:")
-            print(f"Type: {resp['intelligence_type']}")
-            print("Intelligence:", json.dumps(resp["intelligence"], indent=2))
+        # Now process with privacy
+        content_data = {
+            "content": "Call John Smith tomorrow about the project status.",
+            "session_id": session_id
+        }
+        
+        response = requests.post(
+            f"{API_URL}/process-private",
+            json=content_data
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            print(f"Privacy Session: {session_id}")
+            print(f"Original content: {content_data['content']}")
+            print(f"Privacy-safe content: {result['original_content']}")
+            print("Extracted todos:")
+            for todo in result["extracted_info"]["todos"]:
+                print(f"- {todo['title']}")
+            print(f"Tokens: {json.dumps(result['privacy']['tokens'], indent=2)}")
+        else:
+            print(f"Error processing: {response.status_code}")
+            print(response.text)
     else:
-        print(f"Error: {response.status_code}")
-        print(response.text)
+        print(f"Error creating session: {session_response.status_code}")
+        print(session_response.text)
+
+# Conversation example
+def have_conversation():
+    # First create a session
+    session_response = requests.post(
+        f"{API_URL}/sessions",
+        json={"privacy_level": "balanced"}
+    )
+    
+    if session_response.status_code == 200:
+        session_id = session_response.json()["session_id"]
+        
+        # Have a conversation
+        conversation_data = {
+            "message": "Schedule a meeting with Susan Jones next Wednesday at 2pm",
+            "session_id": session_id
+        }
+        
+        response = requests.post(
+            f"{API_URL}/conversation",
+            json=conversation_data
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            print(f"Assistant: {result['response']['message']}")
+            print("\nSuggestions:")
+            for suggestion in result["response"]["suggestions"]:
+                print(f"- {suggestion['text']}")
+        else:
+            print(f"Error in conversation: {response.status_code}")
+            print(response.text)
+    else:
+        print(f"Error creating session: {session_response.status_code}")
+        print(session_response.text)
+```
+
+## CLI Usage
+
+The Knowledge Base System also provides a command-line interface:
+
+```bash
+# Process text with privacy
+python -m knowledge_base.cli process-private "Call John Smith tomorrow about the project status."
+
+# Create a new privacy session
+python -m knowledge_base.cli create-session --privacy-level balanced
+
+# Interactive chat with privacy
+python -m knowledge_base.cli chat
+
+# Search across content
+python -m knowledge_base.cli search "project"
 ```
 
 ## Recommended Practices
 
-1. **Maintain Session Consistency**: Use the same session ID for related requests to build intelligence over time.
-2. **Preserve Context**: Include relevant keywords in the `preserved_context` field to guide intelligence generation.
-3. **Specify Relationships**: Clearly define entity relationships to improve intelligence quality.
-4. **Batch Processing**: Use batch processing for multiple related requests to improve efficiency.
-5. **Error Handling**: Implement proper error handling in client applications.
-
-## Rate Limiting
-
-The API currently does not implement rate limiting, but production deployments should add appropriate limits. 
+1. **Session Management**: Create and reuse sessions for related content to maintain consistency
+2. **Privacy Level Selection**:
+   - "strict": Maximum privacy with more tokenization (recommended for sensitive data)
+   - "balanced": Standard level that balances privacy and context (default)
+   - "minimal": Lower privacy with only essential tokenization
+3. **Error Handling**: Implement proper error handling in client applications
+4. **Interactive Mode**: Use the conversation endpoint for interactive experiences 
