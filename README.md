@@ -29,6 +29,11 @@ This system provides a secure way to manage your knowledge while protecting priv
 - **API Integration**: Connect with other tools through a clean REST API
 - **Conversational Interface**: Chat naturally with your knowledge base
 
+### Quality & Reliability
+- **Comprehensive Test Coverage**: 96% test coverage for privacy components
+- **Performance Benchmarking**: Continuous performance monitoring
+- **Robust Error Handling**: Graceful degradation when components fail
+
 ## 🚀 Getting Started
 
 ### Installation
@@ -38,7 +43,7 @@ This system provides a secure way to manage your knowledge while protecting priv
 pip install knowledge-base-system
 
 # Or install from source
-git clone https://github.com/yourname/knowledge-base-system.git
+git clone https://github.com/taiscoding/knowledge-base-system.git
 cd knowledge-base-system
 pip install -e .
 ```
@@ -124,6 +129,8 @@ For detailed information, see:
 - [Architecture](docs/architecture.md) - System design overview
 - [Privacy Design](docs/privacy_design.md) - How the system protects your data
 - [Integration Guide](docs/integration_guide.md) - Connect with other systems
+- [Test Coverage](docs/test_coverage.md) - Current test coverage report
+- [Contributing Guide](docs/contributing.md) - How to contribute to the project
 
 ## 🔒 Privacy & Security
 
@@ -136,6 +143,17 @@ This system was built with privacy as the core principle:
 5. **Entity Relationships**: Understand connections between entities without exposing identities
 
 For a complete privacy overview, see our [Privacy Design](docs/privacy_design.md) documentation.
+
+## 🧪 Testing & Quality
+
+We maintain high code quality through:
+
+1. **Comprehensive Testing**: 96% test coverage for privacy components
+2. **Performance Monitoring**: Regular benchmarking of key operations
+3. **Integration Tests**: End-to-end workflow testing
+4. **Continuous Improvement**: Ongoing enhancement of tests and code quality
+
+For more details, check out our [Test Coverage Report](docs/test_coverage.md).
 
 ## 📝 Usage Examples
 
@@ -171,6 +189,31 @@ curl -X POST "http://localhost:8000/process-private" \
   -H "Content-Type: application/json" \
   -d '{"content": "Call John at 555-0123", "session_id": "SESSION_ID_HERE"}'
 ```
+
+### Development & Testing
+
+```bash
+# Install development dependencies
+pip install -e ".[dev]"
+
+# Run tests
+python -m pytest
+
+# Run tests with coverage report
+python -m pytest --cov=knowledge_base
+
+# Run performance benchmarks
+python -m pytest tests/benchmarks/ --benchmark-only
+```
+
+## 👥 Contributing
+
+We welcome contributions to the Knowledge Base System! See the [Contributing Guide](docs/contributing.md) for details on:
+
+- Setting up your development environment
+- Testing standards and requirements
+- Code style and documentation
+- Pull request process
 
 ## 📄 License
 

@@ -39,7 +39,7 @@ package/
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/example/knowledge-base-system.git
+   git clone https://github.com/taiscoding/knowledge-base-system.git
    cd knowledge-base-system
    ```
 

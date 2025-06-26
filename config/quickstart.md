@@ -13,7 +13,7 @@ pip install knowledge-base-system
 ### Option 2: Install from Source
 
 ```bash
-git clone https://github.com/example/knowledge-base-system.git
+git clone https://github.com/taiscoding/knowledge-base-system.git
 cd knowledge-base-system
 pip install -e .
 ```

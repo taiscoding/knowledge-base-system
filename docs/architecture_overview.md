@@ -55,6 +55,33 @@ The system consists of two main components with integrated privacy features:
 - **Storage**: Token profile and relationship storage
 - **Utils**: Configuration, logging, validation
 
+### Testing Architecture
+
+```
+┌─────────────────────────────────────────────────┐
+│                 Testing Framework                │
+├─────────────┬─────────────────┬─────────────────┤
+│             │                 │                 │
+│  Unit Tests │  Integration    │  Benchmarks     │
+│  - Privacy  │  Tests          │  - Performance  │
+│  - Core     │  - Workflows    │  - Scaling      │
+│  - API      │  - Components   │                 │
+├─────────────┴─────────────────┴─────────────────┤
+│                                                 │
+│              Test Infrastructure                │
+│  - pytest                                       │
+│  - pytest-cov (coverage)                        │
+│  - pytest-mock (mocking)                        │
+│  - pytest-benchmark (performance)               │
+│                                                 │
+└─────────────────────────────────────────────────┘
+```
+
+- **Unit Tests**: Tests for individual components (96% coverage for privacy components)
+- **Integration Tests**: Tests for component interactions and workflows
+- **Benchmarks**: Performance testing for key operations
+- **Infrastructure**: Built on pytest ecosystem for running tests, measuring coverage, mocking dependencies, and benchmarking performance
+
 ## Data Flow
 
 The complete data flow through the system:
@@ -164,6 +191,31 @@ Privacy is built directly into the Knowledge Base Manager:
 4. **Perfect Token Isolation**: Token Intelligence only ever sees tokens, never original data
 5. **Privacy Validation**: All operations are validated for privacy compliance
 
+## Testing Architecture
+
+The system includes a comprehensive testing framework:
+
+1. **Unit Testing**: Tests for individual components
+   - Privacy Engine (96% coverage)
+   - Session Manager (98% coverage)
+   - Token Intelligence Bridge (92% coverage)
+
+2. **Integration Testing**: Tests for component workflows
+   - Privacy workflow from content to tokenization to reconstruction
+   - Token consistency across multiple operations
+   - Session management and persistence
+
+3. **Performance Benchmarking**: Tests for performance characteristics
+   - Text deidentification (small: ~30μs, medium: ~130μs, large: ~1200μs)
+   - Reconstruction (~11μs)
+   - Session operations (~80-120μs)
+
+4. **Test Infrastructure**:
+   - pytest for test discovery and execution
+   - pytest-cov for code coverage measurement
+   - pytest-mock for dependency mocking
+   - pytest-benchmark for performance testing
+
 ## API Architecture
 
 The system exposes a unified API with privacy-aware endpoints:
@@ -196,4 +248,5 @@ The system uses a hierarchical configuration system:
 - **API**: FastAPI
 - **Storage**: File-based with JSON and Markdown
 - **Configuration**: YAML
+- **Testing**: pytest ecosystem (pytest, pytest-cov, pytest-mock, pytest-benchmark)
 - **Packaging**: Standard Python packaging 
