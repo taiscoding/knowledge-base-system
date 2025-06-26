@@ -1,37 +1,82 @@
 """
-Privacy Integration Module
-Handles integration with the Sankofa privacy layer.
+Privacy Integration Module (Legacy)
+
+DEPRECATED: This module is maintained for backwards compatibility only.
+Please use the privacy.smart_anonymization and related modules instead.
+
+This forwards all calls to the new adapter class that uses the modern privacy components.
 """
 
-import json
-import yaml
+import warnings
 import logging
-from pathlib import Path
 from typing import Dict, List, Any, Optional, Union
 from dataclasses import dataclass
+from pathlib import Path
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+# Issue deprecation warning
+warnings.warn(
+    "The privacy.py module is deprecated and will be removed in a future version. "
+    "Use privacy.smart_anonymization module and related components instead.",
+    DeprecationWarning,
+    stacklevel=2
+)
 
+# Import adapter classes
+from knowledge_base.privacy.adapter import (
+    PrivacyIntegrationAdapter,
+    PrivacyBundle as AdapterPrivacyBundle,
+    PrivacyValidatorAdapter
+)
+
+# Re-export from modern components for compatibility
+from knowledge_base.privacy.smart_anonymization import PrivacyEngine, DeidentificationResult
+from knowledge_base.privacy.session_manager import PrivacySessionManager
+
+# Legacy class definitions that forward to modern implementations
 
 @dataclass
 class PrivacyBundle:
-    """Represents a privacy-preserving data bundle."""
+    """
+    Legacy PrivacyBundle class that forwards to the new adapter implementation.
+    
+    This is maintained for backwards compatibility only.
+    """
     bundle_id: str
     version: str
     privacy_level: str
     content_items: List[Dict[str, Any]]
     metadata: Dict[str, Any]
     privacy_tokens: Dict[str, str]  # Privacy-safe reference tokens
+    
+    def to_adapter_bundle(self):
+        """Convert to adapter bundle for use with new components."""
+        return AdapterPrivacyBundle(
+            bundle_id=self.bundle_id,
+            version=self.version,
+            privacy_level=self.privacy_level,
+            content_items=self.content_items,
+            metadata=self.metadata,
+            privacy_tokens=self.privacy_tokens
+        )
+    
+    @classmethod
+    def from_adapter_bundle(cls, adapter_bundle):
+        """Create from adapter bundle."""
+        return cls(
+            bundle_id=adapter_bundle.bundle_id,
+            version=adapter_bundle.version,
+            privacy_level=adapter_bundle.privacy_level,
+            content_items=adapter_bundle.content_items,
+            metadata=adapter_bundle.metadata,
+            privacy_tokens=adapter_bundle.privacy_tokens
+        )
 
 
 class PrivacyIntegration:
     """
-    Integration with the Sankofa privacy layer.
+    Legacy PrivacyIntegration class that forwards to the new adapter implementation.
     
-    This class handles the privacy-preserving aspects of the knowledge base,
-    ensuring that sensitive information is properly tokenized and protected.
+    This is maintained for backwards compatibility only.
     """
     
     def __init__(self, kb_manager=None, config_path: Optional[str] = None):
@@ -42,31 +87,11 @@ class PrivacyIntegration:
             kb_manager: Knowledge base manager instance
             config_path: Path to privacy configuration file
         """
-        from knowledge_base import KnowledgeBaseManager
-        
-        self.kb = kb_manager or KnowledgeBaseManager()
-        self.config = self._load_privacy_config(config_path)
+        # Forward to adapter
+        self.adapter = PrivacyIntegrationAdapter(kb_manager, config_path)
+        self.kb = self.adapter.kb
+        self.config = self.adapter.config
         self.validator = PrivacyValidator(self.config)
-    
-    def _load_privacy_config(self, config_path: Optional[str] = None) -> Dict[str, Any]:
-        """
-        Load privacy integration configuration.
-        
-        Args:
-            config_path: Path to configuration file
-            
-        Returns:
-            Configuration dictionary
-        """
-        if config_path:
-            path = Path(config_path)
-        else:
-            path = Path("config/sankofa_integration.yaml")
-        
-        if path.exists():
-            with open(path, 'r') as f:
-                return yaml.safe_load(f)
-        return {}
     
     def import_privacy_bundle(self, bundle_path: Union[str, Path]) -> Dict[str, Any]:
         """
@@ -78,59 +103,8 @@ class PrivacyIntegration:
         Returns:
             Import result summary
         """
-        try:
-            logger.info(f"Importing privacy bundle from {bundle_path}")
-            
-            # Load and validate bundle
-            bundle = self._load_bundle(bundle_path)
-            validation_result = self.validator.validate_bundle(bundle)
-            
-            if not validation_result['valid']:
-                return {
-                    "success": False,
-                    "error": "Privacy validation failed",
-                    "details": validation_result['errors']
-                }
-            
-            # Process each content item
-            imported_items = []
-            saved_files = []
-            
-            for item in bundle.content_items:
-                processed_item = self._process_privacy_item(item, bundle)
-                if processed_item:
-                    filepath = self.kb.save_content(processed_item['content'], processed_item['type'])
-                    saved_files.append(filepath)
-                    imported_items.append(processed_item)
-            
-            # Create organizational metadata while preserving privacy
-            enriched_items = self._enrich_with_organization(imported_items, bundle)
-            
-            # Save to knowledge base
-            for item in enriched_items:
-                try:
-                    filepath = self.kb.save_content(item['content'], item['type'])
-                    saved_files.append(filepath)
-                    logger.info(f"Saved {item['type']}: {filepath}")
-                except Exception as e:
-                    logger.error(f"Error saving item: {e}")
-            
-            return {
-                "success": True,
-                "bundle_id": bundle.bundle_id,
-                "items_imported": len(imported_items),
-                "files_created": len(saved_files),
-                "privacy_level": bundle.privacy_level,
-                "message": f"Successfully imported {len(imported_items)} items from privacy bundle"
-            }
-            
-        except Exception as e:
-            logger.error(f"Import failed: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "message": f"Failed to import privacy bundle: {e}"
-            }
+        # Forward to adapter
+        return self.adapter.import_privacy_bundle(bundle_path)
     
     def export_to_privacy_bundle(self, export_config: Dict[str, Any] = None) -> Dict[str, Any]:
         """
@@ -142,42 +116,8 @@ class PrivacyIntegration:
         Returns:
             Export result with bundle path
         """
-        try:
-            config = export_config or self.config.get('export', {})
-            
-            # Collect all knowledge base content
-            kb_content = self._collect_kb_content()
-            
-            # Validate privacy compliance before export
-            privacy_check = self.validator.validate_export(kb_content)
-            if not privacy_check['valid']:
-                return {
-                    "success": False,
-                    "error": "Privacy validation failed for export",
-                    "details": privacy_check['errors']
-                }
-            
-            # Create privacy bundle
-            bundle = self._create_privacy_bundle(kb_content, config)
-            
-            # Save bundle
-            bundle_path = self._save_bundle(bundle, config)
-            
-            return {
-                "success": True,
-                "bundle_path": str(bundle_path),
-                "bundle_id": bundle.bundle_id,
-                "items_exported": len(bundle.content_items),
-                "message": f"Successfully exported {len(bundle.content_items)} items to privacy bundle"
-            }
-            
-        except Exception as e:
-            logger.error(f"Export failed: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "message": f"Failed to export to privacy bundle: {e}"
-            }
+        # Forward to adapter
+        return self.adapter.export_to_privacy_bundle(export_config)
     
     def process_privacy_stream(self, privacy_stream_data: Dict[str, Any]) -> Dict[str, Any]:
         """
@@ -189,162 +129,16 @@ class PrivacyIntegration:
         Returns:
             Processing result
         """
-        try:
-            # Validate streaming data
-            if not self.validator.validate_stream_item(privacy_stream_data):
-                return {
-                    "success": False,
-                    "error": "Stream data failed privacy validation"
-                }
-            
-            # Process the stream item
-            processed_item = self._process_stream_item(privacy_stream_data)
-            
-            # Intelligent categorization and organization
-            organized_item = self._organize_stream_item(processed_item)
-            
-            # Save to knowledge base
-            filepath = self.kb.save_content(organized_item['content'], organized_item['type'])
-            
-            return {
-                "success": True,
-                "item_type": organized_item['type'],
-                "file_saved": filepath,
-                "privacy_preserved": True,
-                "message": "Stream item processed and organized successfully"
-            }
-            
-        except Exception as e:
-            logger.error(f"Stream processing failed: {e}")
-            return {
-                "success": False,
-                "error": str(e),
-                "message": f"Failed to process stream item: {e}"
-            }
-    
-    def _load_bundle(self, bundle_path: Union[str, Path]) -> PrivacyBundle:
-        """Load and parse a privacy bundle."""
-        with open(bundle_path, 'r') as f:
-            raw_data = json.load(f)
-        
-        return PrivacyBundle(
-            bundle_id=raw_data['bundle_id'],
-            version=raw_data['version'],
-            privacy_level=raw_data['privacy_level'],
-            content_items=raw_data['content_items'],
-            metadata=raw_data.get('metadata', {}),
-            privacy_tokens=raw_data.get('privacy_tokens', {})
-        )
-    
-    def _process_privacy_item(self, item: Dict[str, Any], bundle: PrivacyBundle) -> Dict[str, Any]:
-        """Process a single privacy item while preserving privacy."""
-        # Map privacy types to knowledge base types
-        type_mapping = self.config.get('integration', {}).get('import', {}).get('data_mapping', {})
-        
-        privacy_type = item.get('privacy_type', 'unknown')
-        kb_type = type_mapping.get(privacy_type, 'note')
-        
-        # Preserve privacy tokens and de-identification
-        privacy_metadata = {
-            'privacy_id': item.get('privacy_id'),
-            'privacy_level': bundle.privacy_level,
-            'privacy_tokens': item.get('privacy_tokens', {}),
-            'deidentified': True
-        }
-        
-        # Extract content while maintaining privacy
-        content = {
-            'id': self.kb.generate_id(),
-            'created': item.get('created', self.kb.get_timestamp()),
-            'type': kb_type,
-            'title': item.get('title', 'Imported from privacy layer'),
-            'content': item.get('content', ''),
-            'privacy_metadata': privacy_metadata,
-            'tags': item.get('tags', []),
-            'category': item.get('category', 'imported')
-        }
-        
-        return {
-            'type': kb_type,
-            'content': content,
-            'original_item': item
-        }
-    
-    def _process_stream_item(self, item: Dict[str, Any]) -> Dict[str, Any]:
-        """Process a streaming item with privacy preservation."""
-        # This is a simplified implementation
-        content_type = item.get('type', 'note')
-        
-        return {
-            'content': item,
-            'type': content_type
-        }
-    
-    def _organize_stream_item(self, item: Dict[str, Any]) -> Dict[str, Any]:
-        """Add organizational intelligence to a stream item."""
-        # This is a simplified implementation
-        return item
-    
-    def _collect_kb_content(self) -> List[Dict[str, Any]]:
-        """Collect content from the knowledge base for export."""
-        # This is a simplified implementation - real implementation would query all KB content
-        return []
-    
-    def _create_privacy_bundle(self, content: List[Dict[str, Any]], config: Dict[str, Any]) -> PrivacyBundle:
-        """Create a privacy bundle from knowledge base content."""
-        from knowledge_base.utils.helpers import generate_id, get_timestamp
-        
-        bundle_id = f"kb-export-{generate_id()}"
-        
-        return PrivacyBundle(
-            bundle_id=bundle_id,
-            version="1.0.0",
-            privacy_level=config.get('privacy_level', 'standard'),
-            content_items=content,
-            metadata={
-                "exported_at": get_timestamp(),
-                "source": "knowledge_base",
-                "item_count": len(content)
-            },
-            privacy_tokens={}
-        )
-    
-    def _save_bundle(self, bundle: PrivacyBundle, config: Dict[str, Any]) -> Path:
-        """Save a privacy bundle to disk."""
-        from datetime import datetime
-        
-        # Determine export path
-        export_dir = Path(config.get('export_dir', 'exports'))
-        export_dir.mkdir(parents=True, exist_ok=True)
-        
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"portable_kb_bundle_{timestamp}.json"
-        filepath = export_dir / filename
-        
-        # Convert bundle to dict
-        bundle_dict = {
-            "bundle_id": bundle.bundle_id,
-            "version": bundle.version,
-            "privacy_level": bundle.privacy_level,
-            "content_items": bundle.content_items,
-            "metadata": bundle.metadata,
-            "privacy_tokens": bundle.privacy_tokens
-        }
-        
-        # Save to file
-        with open(filepath, 'w') as f:
-            json.dump(bundle_dict, f, indent=2)
-        
-        return filepath
-    
-    def _enrich_with_organization(self, items: List[Dict[str, Any]], bundle: PrivacyBundle) -> List[Dict[str, Any]]:
-        """Add organizational intelligence while preserving privacy."""
-        # This is a simplified implementation
-        return items
+        # Forward to adapter
+        return self.adapter.process_privacy_stream(privacy_stream_data)
 
 
 class PrivacyValidator:
-    """Validates that privacy is maintained throughout processing."""
+    """
+    Legacy PrivacyValidator class that forwards to the new adapter implementation.
+    
+    This is maintained for backwards compatibility only.
+    """
     
     def __init__(self, config: Dict[str, Any]):
         """
@@ -353,6 +147,8 @@ class PrivacyValidator:
         Args:
             config: Configuration dictionary
         """
+        # Forward to adapter
+        self.adapter = PrivacyValidatorAdapter(config)
         self.config = config
     
     def validate_bundle(self, bundle: PrivacyBundle) -> Dict[str, Any]:
@@ -365,26 +161,9 @@ class PrivacyValidator:
         Returns:
             Validation result
         """
-        errors = []
-        
-        # Check bundle structure
-        if not bundle.bundle_id:
-            errors.append("Missing bundle ID")
-        
-        if not bundle.privacy_level:
-            errors.append("Missing privacy level")
-        
-        # Validate each content item
-        for i, item in enumerate(bundle.content_items):
-            item_errors = self._validate_item_privacy(item)
-            if item_errors:
-                errors.extend([f"Item {i}: {error}" for error in item_errors])
-        
-        return {
-            'valid': len(errors) == 0,
-            'errors': errors,
-            'privacy_level': bundle.privacy_level
-        }
+        # Convert to adapter bundle and forward
+        adapter_bundle = bundle.to_adapter_bundle()
+        return self.adapter.validate_bundle(adapter_bundle)
     
     def validate_export(self, content: List[Dict[str, Any]]) -> Dict[str, Any]:
         """
@@ -396,17 +175,8 @@ class PrivacyValidator:
         Returns:
             Validation result
         """
-        errors = []
-        
-        for item in content:
-            # Check for potential re-identification risks
-            if self._contains_identifying_info(item):
-                errors.append(f"Item {item.get('id', 'unknown')} may contain identifying information")
-        
-        return {
-            'valid': len(errors) == 0,
-            'errors': errors
-        }
+        # Forward to adapter
+        return self.adapter.validate_export(content)
     
     def validate_stream_item(self, item: Dict[str, Any]) -> bool:
         """
@@ -418,7 +188,8 @@ class PrivacyValidator:
         Returns:
             True if privacy-compliant, False otherwise
         """
-        return not self._contains_identifying_info(item)
+        # Forward to adapter
+        return self.adapter.validate_stream_item(item)
     
     def _validate_item_privacy(self, item: Dict[str, Any]) -> List[str]:
         """
@@ -430,15 +201,8 @@ class PrivacyValidator:
         Returns:
             List of error messages, empty if valid
         """
-        errors = []
-        
-        if not item.get('privacy_tokens'):
-            errors.append("Missing privacy tokens")
-        
-        if self._contains_identifying_info(item):
-            errors.append("Item may contain identifying information")
-        
-        return errors
+        # Forward to adapter
+        return self.adapter._validate_item_privacy(item)
     
     def _contains_identifying_info(self, item: Dict[str, Any]) -> bool:
         """
@@ -450,14 +214,5 @@ class PrivacyValidator:
         Returns:
             True if identifying info found, False otherwise
         """
-        content = str(item.get('content', '')).lower()
-        
-        # Simple patterns that might indicate identifying info
-        identifying_patterns = [
-            '@',  # Email addresses
-            'phone:', 'tel:', 'mobile:',  # Phone numbers
-            'ssn:', 'social security',  # SSN
-            'address:', 'street:', 'home:'  # Addresses
-        ]
-        
-        return any(pattern in content for pattern in identifying_patterns) 
+        # Forward to adapter
+        return self.adapter._contains_identifying_info(item) 
