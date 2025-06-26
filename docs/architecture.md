@@ -239,6 +239,52 @@ response = knowledge_base.process_and_respond(
 )
 ```
 
+## Adapter Pattern for Legacy Code
+
+To maintain backward compatibility with existing code that uses the legacy privacy module, we implemented the adapter design pattern:
+
+```
+┌───────────────────┐     ┌───────────────────────┐     ┌───────────────────┐
+│                   │     │                       │     │                   │
+│  Legacy Code      │────►│  Adapter Classes      │────►│  Modern Privacy   │
+│  (privacy.py)     │     │  (privacy/adapter.py) │     │  Components       │
+│                   │     │                       │     │                   │
+└───────────────────┘     └───────────────────────┘     └───────────────────┘
+```
+
+### Legacy Module Adapter
+
+The legacy `privacy.py` module is now implemented as a thin wrapper that delegates calls to the modern components through adapter classes:
+
+**Key Components**:
+- **PrivacyIntegrationAdapter**: Maps legacy `PrivacyIntegration` methods to modern components
+- **PrivacyValidatorAdapter**: Maps legacy `PrivacyValidator` methods to modern components
+- **Transparent Forwarding**: All legacy methods forward to the appropriate adapter methods
+
+### Adapter Implementation
+
+```python
+# Legacy class forwards calls to adapter
+class PrivacyIntegration:
+    def __init__(self, kb_manager=None, config_path=None):
+        # Forward to adapter
+        self.adapter = PrivacyIntegrationAdapter(kb_manager, config_path)
+        self.kb = self.adapter.kb
+        self.config = self.adapter.config
+        
+    def import_privacy_bundle(self, bundle_path):
+        # Forward to adapter
+        return self.adapter.import_privacy_bundle(bundle_path)
+```
+
+### Migration Path
+
+The adapter pattern provides a smooth migration path:
+1. Existing code continues to work using the legacy interfaces
+2. New code can directly use the modern components
+3. Legacy code can be gradually migrated to the new interfaces
+4. The adapter layer will be removed in a future major version
+
 ## Testing Architecture
 
 ```

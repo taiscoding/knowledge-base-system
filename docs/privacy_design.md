@@ -188,6 +188,9 @@ The privacy implementation is carefully optimized for performance:
 - **Token Caching**: Fast lookup of existing tokens via inverse mapping
 - **Staged Processing**: Multi-stage processing pipeline for better performance
 - **Minimal Overhead**: Privacy protection adds minimal latency (~0.1-3ms for typical text)
+- **Multi-Level Priority Cache**: Advanced caching system with memory and disk layers that intelligently prioritizes frequently used items
+- **Precompiled Token Extraction**: Pattern compilation at initialization with optimized extraction algorithms
+- **Thread-Safe Caching**: Multi-threaded support for concurrent access with proper locking
 
 ## Privacy Testing and Validation
 
