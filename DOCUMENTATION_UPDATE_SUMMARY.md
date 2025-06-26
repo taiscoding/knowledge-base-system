@@ -1,8 +1,33 @@
 # Documentation Update Summary
 
-This document summarizes the documentation updates made after successfully fixing the privacy component tests.
+This document summarizes the documentation updates made after successfully fixing the privacy component tests and implementing the test coverage improvements.
 
-## Documentation Updated
+## Recent Documentation Updates (June 27, 2025)
+
+1. **Documentation Consolidation**
+   - Merged `docs/architecture.md` and `docs/architecture_overview.md` into a single comprehensive `docs/architecture.md` file
+   - Updated all references to architecture documentation in other files
+   - Updated last modified dates on all documentation files
+   - Fixed inconsistent references between documentation files
+
+2. **Test Coverage Documentation Update**
+   - Updated `docs/test_coverage.md` with the latest coverage metrics (72% overall)
+   - Added information about KnowledgeBaseManager test coverage (75%)
+   - Added information about CLI and API test implementations
+   - Added details about performance optimizations implemented
+
+3. **Main Documentation References**
+   - Updated `docs/README.md` with correct file references and system name
+   - Removed outdated references to separate systems
+   - Added link to TEST_COVERAGE_SUMMARY.md
+   - Updated API server command examples
+
+4. **README Updates**
+   - Updated main README.md with correct test coverage metrics
+   - Added link to performance optimization documentation
+   - Fixed inconsistent references to test coverage percentages
+
+## Previous Documentation Updates (June 26, 2025)
 
 1. **Test Coverage Documentation**
    - Updated `docs/test_coverage.md` with accurate coverage metrics
@@ -41,52 +66,42 @@ This document summarizes the documentation updates made after successfully fixin
 
 ## Test Status
 
-All 36 privacy component tests are now passing with the following coverage:
+All 89 tests are now passing with the following coverage:
 
 | Component | Coverage |
 |-----------|----------|
+| knowledge_base/__init__.py | 100% |
+| knowledge_base/cli.py | 89% |
+| knowledge_base/content_types.py | 97% |
+| knowledge_base/manager.py | 75% |
+| knowledge_base/privacy.py | 0% (Legacy) |
 | knowledge_base/privacy/__init__.py | 100% |
 | knowledge_base/privacy/session_manager.py | 100% |
-| knowledge_base/privacy/smart_anonymization.py | 88% |
-| knowledge_base/privacy/token_intelligence_bridge.py | 96% |
-| **TOTAL** | **93%** |
-
-## Performance Benchmarks
-
-The benchmark tests revealed the following performance metrics:
-
-| Operation | Performance | Per-operation Time |
-|-----------|------------|--------|
-| Deidentify (Small Text) | ~14,492 ops/sec | ~69μs |
-| Deidentify (Medium Text) | ~3,469 ops/sec | ~288μs |
-| Deidentify (Large Text) | ~364 ops/sec | ~2.75ms |
-| Reconstruct | ~49,858 ops/sec | ~20μs |
-| Token Consistency | ~30,316 ops/sec | ~33μs |
-| Session Create | ~8,997 ops/sec | ~111μs |
-| Session Update | ~13,444 ops/sec | ~74μs |
+| knowledge_base/privacy/smart_anonymization.py | 89% |
+| knowledge_base/privacy/token_intelligence_bridge.py | 90% |
+| knowledge_base/utils/__init__.py | 100% |
+| knowledge_base/utils/config.py | 71% |
+| knowledge_base/utils/helpers.py | 28% |
+| **TOTAL** | **72%** |
 
 ## Next Steps
 
-Based on our documentation updates and test fixes, the following next steps are recommended:
+Based on our documentation updates and test improvements, the following next steps are recommended:
 
-1. **Expand Test Coverage**
-   - Implement tests for KnowledgeBaseManager
-   - Add tests for CLI interface and API endpoints
-   - Develop more integration tests
+1. **Improve Coverage in Utility Modules**
+   - Add more tests for utils/helpers.py (28% coverage)
+   - Improve test coverage for utils/config.py (71% coverage)
 
-2. **Performance Enhancements**
-   - Implement batch processing for multiple texts
-   - Add client-side caching for token intelligence results
-   - Pre-compile regex patterns at initialization
+2. **Enhance Manager Testing**
+   - Add more tests for complex content processing in manager.py
+   - Add tests for edge cases in extraction logic
+   - Improve test fixtures for manager tests
 
-3. **Documentation Improvements**
-   - Add examples to function docstrings
-   - Create a comprehensive testing guide
-   - Document error handling patterns
+3. **Address Legacy Code**
+   - Remove or refactor the legacy privacy.py file (0% coverage)
 
-4. **Code Refinement**
-   - Continue refactoring other components based on the patterns established
-   - Enhance code organization and modularization
-   - Improve error handling consistency
+4. **Expand Integration Testing**
+   - Add more integration tests for complex workflows
+   - Create end-to-end tests that exercise the entire system
 
-These updates complete the documentation portion of the privacy component improvements. The knowledge base system now has comprehensive documentation covering its privacy features, testing approach, and performance characteristics. 
+These updates complete the documentation reorganization portion of the system improvements. The knowledge base system now has clean, comprehensive, and consistent documentation covering its features, architecture, testing approach, and performance characteristics. 

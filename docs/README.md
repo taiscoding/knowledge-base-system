@@ -1,10 +1,10 @@
-# Token Intelligence System Documentation
+# Knowledge Base System Documentation
 
-*Last updated: June 26, 2025*
+*Last updated: June 27, 2025*
 
 ## Documentation Contents
 
-This directory contains comprehensive documentation for the Token Intelligence System.
+This directory contains comprehensive documentation for the Knowledge Base System with integrated Privacy.
 
 ### Core Documentation
 
@@ -13,7 +13,11 @@ This directory contains comprehensive documentation for the Token Intelligence S
 - [Privacy Design](privacy_design.md) - Privacy protection approach and implementation
 - [Test Coverage Report](test_coverage.md) - Current test coverage status and goals
 - [Performance Optimization](performance_optimization.md) - Performance metrics and optimization techniques
-- [Configuration Modes](../CONFIG_MODES.md) - Configuration options and modes
+- [User Guide](user_guide.md) - Getting started guide for users
+- [Integration Guide](integration_guide.md) - How to integrate with other systems
+- [Troubleshooting Guide](troubleshooting.md) - Common issues and solutions
+- [FAQ](faq.md) - Frequently asked questions
+- [Roadmap](roadmap.md) - Future development plans
 
 ### Technical Implementation
 
@@ -26,20 +30,20 @@ The `examples` directory contains executable Python examples that demonstrate ho
 
 - [Basic Usage](examples/basic_usage.py) - Using the system as a library
 - [API Client](examples/api_client.py) - Interacting with the API server
+- [Combined Usage](examples/combined_usage.py) - Using multiple features together
 
 ### Additional Resources
 
-- [Refactoring Summary](../REFACTORING_SUMMARY.md) - Overview of the recent refactoring
-- [Reorganization Summary](../REORGANIZATION_SUMMARY.md) - Latest system reorganization updates
-- [Token Intelligence Roadmap](../TOKEN_INTELLIGENCE_ROADMAP.md) - Future development plans
 - [Contributing Guide](../CONTRIBUTING.md) - Guidelines for contributing to the project
+- [Test Coverage Summary](../TEST_COVERAGE_SUMMARY.md) - Latest test coverage report
+- [Reorganization Summary](../REORGANIZATION_SUMMARY.md) - System reorganization updates
 
 ## Running Examples
 
 You can run the example scripts directly:
 
 ```bash
-# Make sure you have the Token Intelligence System installed
+# Make sure you have the Knowledge Base System installed
 pip install -e ..
 
 # Run basic usage example
@@ -55,7 +59,7 @@ To start the API server for testing:
 
 ```bash
 # From the project root
-token-intelligence-server --host 127.0.0.1 --port 5000 --debug
+python -m scripts.api_server
 ```
 
 ## Running Tests

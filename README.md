@@ -30,7 +30,7 @@ This system provides a secure way to manage your knowledge while protecting priv
 - **Conversational Interface**: Chat naturally with your knowledge base
 
 ### Quality & Reliability
-- **Comprehensive Test Coverage**: 96% test coverage for privacy components
+- **Comprehensive Test Coverage**: 89-100% test coverage for privacy components, 72% overall
 - **Performance Benchmarking**: Continuous performance monitoring
 - **Robust Error Handling**: Graceful degradation when components fail
 
@@ -130,6 +130,7 @@ For detailed information, see:
 - [Privacy Design](docs/privacy_design.md) - How the system protects your data
 - [Integration Guide](docs/integration_guide.md) - Connect with other systems
 - [Test Coverage](docs/test_coverage.md) - Current test coverage report
+- [Performance Optimization](docs/performance_optimization.md) - Optimization techniques
 - [Contributing Guide](docs/contributing.md) - How to contribute to the project
 
 ## 🔒 Privacy & Security
@@ -148,7 +149,7 @@ For a complete privacy overview, see our [Privacy Design](docs/privacy_design.md
 
 We maintain high code quality through:
 
-1. **Comprehensive Testing**: 96% test coverage for privacy components
+1. **Comprehensive Testing**: 72% overall test coverage, 89-100% for privacy components
 2. **Performance Monitoring**: Regular benchmarking of key operations
 3. **Integration Tests**: End-to-end workflow testing
 4. **Continuous Improvement**: Ongoing enhancement of tests and code quality

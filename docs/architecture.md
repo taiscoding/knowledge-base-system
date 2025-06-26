@@ -1,68 +1,144 @@
-# Token Intelligence System Architecture
+# Knowledge Base System Architecture
 
-*Last updated: June 23, 2025*
+*Last updated: June 27, 2025*
 
 ## Overview
 
-The Token Intelligence System is built on a modular, component-based architecture designed for privacy, extensibility, and performance. This document outlines the high-level architecture, key components, and data flows.
+The Knowledge Base System is built on a modular, component-based architecture designed for privacy, extensibility, and performance. This document outlines the high-level architecture, key components, and data flows.
 
-## System Overview
+## System Components
 
-The Token Intelligence System is a privacy-preserving AI enhancement layer that generates rich, persistent intelligence from anonymized tokens to enhance AI platforms while maintaining user privacy.
+The system consists of two main components with integrated privacy features:
+
+1. **Knowledge Base Manager**: Organizes and processes content, extracts information, handles storage, and includes integrated privacy functionality
+2. **Token Intelligence System**: Generates insights from tokenized content without accessing original data
+
+## Component Architecture
+
+### Knowledge Base Manager
 
 ```
-┌───────────────────┐     ┌───────────────────┐
-│                   │     │                   │
-│    Client App     │     │  Knowledge Base   │
-│                   │     │                   │
-└─────────┬─────────┘     └────────┬──────────┘
-          │                        │
-          │                        │
-          │                        │                        ┌────────────────┐
-          │                        │                        │                │
-          │                        │                        │   Storage      │
-┌─────────▼────────────────────────▼────────────────┐      │                │
-│                                                   │      │  ┌──────────┐  │
-│         Token Intelligence API Server             │      │  │ Profiles │  │
-│                                                   │      │  └──────────┘  │
-│  ┌─────────────┐    ┌─────────────┐    ┌────────┐ │      │                │
-│  │ Endpoints   │    │ Validation  │    │ Batch  │ │      │  ┌──────────┐  │
-│  │             │    │             │    │Handler │ │      │  │Patterns  │  │
-│  └──────┬──────┘    └──────┬──────┘    └───┬────┘ │      │  └──────────┘  │
-└─────────┼─────────────────┼──────────────┼────────┘      │                │
-          │                 │              │               │  ┌──────────┐  │
-┌─────────▼─────────────────▼──────────────▼─────────┐     │  │Relations │  │
-│                                                    │     │  └──────────┘  │
-│           Token Intelligence Engine                │     │                │
-│                                                    │     └────────────────┘
-│  ┌───────────────┐   ┌──────────────────────────┐  │               ▲
-│  │               │   │                          │  │               │
-│  │  Extractors   │   │     Intelligence         │  │               │
-│  │               │   │     Generators           │  │◄──────────────┘
-│  └───────────────┘   │                          │  │
-│                      │  ┌──────────┐            │  │               ┌───────────────┐
-│                      │  │ Person   │            │  │               │               │
-│  ┌───────────────┐   │  └──────────┘            │  │◄──────────────┤ Configuration │
-│  │               │   │                          │  │               │               │
-│  │  Analyzers    │   │  ┌──────────┐            │  │               └───────────────┘
-│  │               │   │  │ Medical  │            │  │
-│  └───────────────┘   │  └──────────┘            │  │
-│                      │                          │  │
-└────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────┐
+│                Knowledge Base Manager                 │
+├─────────────┬───────────────────────┬─────────────────┤
+│             │                       │                 │
+│  Manager    │  Content Types        │  Privacy        │
+│             │  - Note               │  - Engine       │
+├─────────────┤  - Todo               │  - Session Mgr  │
+│             │  - CalendarEvent      │  - TokenBridge  │
+│  Utils      │  - Project            │                 │
+│             │  - Reference          │                 │
+└─────────────┴───────────────────────┴─────────────────┘
 ```
 
-## Core Components
+- **Manager**: Core class that handles content processing and organization
+- **Content Types**: Data classes for different types of content
+- **Utils**: Configuration, helpers, and utility functions
+- **Privacy**: Integrated privacy components for anonymization and session management
 
-### 1. API Layer
+### Token Intelligence System
 
-The API layer provides HTTP endpoints for client applications to interact with the Token Intelligence System.
+```
+┌─────────────────────────────────────────┐
+│         Token Intelligence System       │
+├─────────────┬───────────────┬───────────┤
+│             │               │           │
+│  Core       │  Intelligence │  API      │
+│  - Engine   │  - Generators │  - REST   │
+│  - Models   │  - Analyzers  │  - Batch  │
+├─────────────┼───────────────┼───────────┤
+│             │               │           │
+│  Storage    │  Utils        │           │
+│             │               │           │
+└─────────────┴───────────────┴───────────┘
+```
+
+- **Core**: Main engine and data models
+- **Intelligence**: Generators and analyzers for different token types
+- **API**: REST API for accessing token intelligence
+- **Storage**: Token profile and relationship storage
+- **Utils**: Configuration, logging, validation
+
+## Complete Data Flow
+
+```mermaid
+graph TD
+    A[User Content] -->|Tokenization| B[Privacy Engine]
+    B -->|Tokenized Content| C[Knowledge Base Manager]
+    
+    C -->|Organization & Storage| D[Knowledge Base]
+    C -->|Privacy-Safe Tokens| E[Token Intelligence Engine]
+    
+    E -->|Token Intelligence| C
+    C -->|Enhanced Content| F[AI Response Generator]
+    F -->|Anonymized Response| B
+    B -->|De-anonymized Response| A
+    
+    subgraph "Knowledge System"
+    C
+    D
+    E
+    F
+    end
+    
+    subgraph "Privacy Layer"
+    B
+    end
+```
+
+The detailed flow through the system:
+
+1. User creates content with sensitive information
+2. Knowledge Base tokenizes sensitive information through integrated privacy engine
+3. Knowledge Base processes and organizes tokenized content
+4. Token Intelligence analyzes tokens and generates insights without seeing original data
+5. Knowledge Base enhances content with token intelligence
+6. Knowledge Base de-tokenizes content before returning to user
+
+## Privacy Architecture
+
+Privacy is built directly into the Knowledge Base Manager:
+
+1. **Integrated Privacy Engine**: Handles tokenization and de-tokenization
+2. **Session Manager**: Maintains privacy sessions for consistent tokenization
+3. **Token Intelligence Bridge**: Connects to Token Intelligence with fallback capabilities
+4. **Perfect Token Isolation**: Token Intelligence only ever sees tokens, never original data
+5. **Privacy Validation**: All operations are validated for privacy compliance
+
+### Privacy Engine Operation
+
+The Privacy Engine is responsible for:
+
+1. **Smart Anonymization**: Detects entities like names, emails, phone numbers, locations
+2. **Token Management**: Ensuring consistent tokens for the same entities
+3. **Relationship Tracking**: Maintaining relationships between tokenized entities
+4. **Text Reconstruction**: Converting tokenized text back to original format
+
+## API Layer
+
+The API layer provides HTTP endpoints for client applications to interact with the Knowledge Base System:
 
 **Key Components**:
 - **Endpoints**: Flask routes handling HTTP requests and responses
 - **Validation**: Request validation ensuring proper data format and content
 - **Batch Handler**: Specialized component for efficient batch processing
 
-#### Endpoints
+### Knowledge Base API Endpoints
+
+```
+┌───────────────────────────────┐     
+│ Knowledge Base API            │     
+├───────────────────────────────┤     
+│/process                       │     
+│/process-private               │     
+│/search                        │     
+│/conversation                  │     
+│/sessions                      │     
+└───────────────────────────────┘     
+```
+
+### Token Intelligence API Endpoints
+
 ```http
 POST /analyze_privacy_tokens
 GET /health
@@ -70,7 +146,7 @@ GET /intelligence_stats
 GET /token_profile/<token_id>
 ```
 
-#### Request Format
+### Request Format Example
 ```json
 {
     "privacy_text": "Meeting with [PERSON_001] about [PROJECT_002]",
@@ -83,7 +159,7 @@ GET /token_profile/<token_id>
 }
 ```
 
-#### Response Format
+### Response Format Example
 ```json
 {
     "intelligence": {
@@ -96,30 +172,9 @@ GET /token_profile/<token_id>
 }
 ```
 
-### 2. Core Engine
+## Intelligence Generation
 
-The engine is the central processing unit that coordinates token extraction, intelligence generation, and data storage.
-
-**Key Components**:
-- **TokenIntelligenceEngine**: Main class coordinating the intelligence generation process
-- **Token Extractor**: Parses privacy tokens from text input
-- **Data Models**: Defines request/response structures and internal data types
-
-```python
-class TokenIntelligenceEngine:
-    """Core engine for generating token-based intelligence."""
-    
-    def generate_intelligence(self, request: TokenIntelligenceRequest) -> TokenIntelligenceResponse:
-        """
-        Generate intelligence from privacy tokens - NEVER uses original data.
-        Performance: 0-2ms processing time
-        Privacy: 100% token-only processing
-        """
-```
-
-### 3. Intelligence Generators
-
-Specialized modules that generate specific types of intelligence based on token types.
+Specialized modules generate specific types of intelligence based on token types:
 
 **Key Components**:
 - **Person Generator**: Generates intelligence for person tokens
@@ -127,7 +182,7 @@ Specialized modules that generate specific types of intelligence based on token 
 - **Document Generator**: Generates intelligence for document tokens
 - **Project Generator**: Generates intelligence for project tokens
 
-#### Sample Implementation
+### Intelligence Generator Implementation
 
 ```python
 def _generate_person_intelligence(token: str, context: List[str], profile: Dict) -> Dict:
@@ -141,93 +196,154 @@ def _generate_person_intelligence(token: str, context: List[str], profile: Dict)
         intelligence[f"{token}_expertise"] = "research collaborator"
 ```
 
-### 4. Analyzers
+## Integration Points
 
-Components that detect patterns and relationships across tokens and contexts.
+### Knowledge Base to Token Intelligence
 
-**Key Components**:
-- **Pattern Analyzer**: Identifies usage patterns and trends
-- **Relationship Analyzer**: Maps connections between different tokens
+The Knowledge Base communicates with the Token Intelligence system through the TokenIntelligenceBridge:
 
-### 5. Storage
+```python
+# Knowledge Base extracts tokenized text
+tokenized_text = "Meeting with [PERSON_001] about [PROJECT_002]"
 
-Persistence layer for token profiles, relationships, and patterns.
+# Create Token Intelligence request through the bridge
+token_intelligence = token_intelligence_bridge.generate_intelligence(
+    privacy_text=tokenized_text,
+    session_id=session_id,
+    preserved_context=context_keywords,
+    entity_relationships=relationships
+)
 
-**Key Components**:
-- **Profile Manager**: Stores and retrieves token profiles
-- **Relationship Manager**: Manages relationships between tokens
-- **Pattern Manager**: Stores detected patterns for future reference
-
-#### Token Profiles Example
-```json
-{
-    "PERSON_001": {
-        "created": "2024-01-01T10:00:00Z",
-        "interactions": 15,
-        "contexts_seen": ["work", "social", "academic"],
-        "PERSON_001_intelligence": {
-            "context": "professional colleague",
-            "expertise": "machine learning research",
-            "preferences": "prefers quiet restaurants"
-        }
-    }
-}
+# Use intelligence to enhance content
+enhanced_content = original_content
+for token, insight in token_intelligence.items():
+    enhanced_content = apply_insight(enhanced_content, token, insight)
 ```
 
-### 6. Utilities
+### Privacy Integration
 
-Cross-cutting concerns shared across the system.
+The privacy functionality is now integrated directly into the Knowledge Base:
 
-**Key Components**:
-- **Configuration**: Loads and manages configuration settings
-- **Logging**: Consistent logging utilities
-- **Validation**: Common validation functions
+```python
+# Process content with privacy
+result = knowledge_base.process_with_privacy(
+    content="Call John Smith about the project tomorrow",
+    session_id="session-123",
+    privacy_level="balanced"
+)
 
-## Data Flow
+# Process and generate a response with automatic privacy handling
+response = knowledge_base.process_and_respond(
+    content="Schedule a meeting with Susan Jones",
+    session_id="session-123"
+)
+```
 
-### Single Request Processing
+## Testing Architecture
 
-1. Client submits request to `/analyze_privacy_tokens` endpoint
-2. Request is validated by validation module
-3. Engine extracts tokens from privacy text
-4. Engine routes tokens to appropriate intelligence generators
-5. Generators produce token-specific intelligence
-6. Engine combines intelligence and calculates confidence
-7. Engine stores intelligence data via storage managers
-8. API formats and returns response to client
+```
+┌─────────────────────────────────────────────────┐
+│                 Testing Framework                │
+├─────────────┬─────────────────┬─────────────────┤
+│             │                 │                 │
+│  Unit Tests │  Integration    │  Benchmarks     │
+│  - Privacy  │  Tests          │  - Performance  │
+│  - Core     │  - Workflows    │  - Scaling      │
+│  - API      │  - Components   │                 │
+├─────────────┴─────────────────┴─────────────────┤
+│                                                 │
+│              Test Infrastructure                │
+│  - pytest                                       │
+│  - pytest-cov (coverage)                        │
+│  - pytest-mock (mocking)                        │
+│  - pytest-benchmark (performance)               │
+│                                                 │
+└─────────────────────────────────────────────────┘
+```
 
-### Batch Request Processing
+The system includes a comprehensive testing framework:
 
-1. Client submits multiple requests to `/analyze_privacy_tokens_batch` endpoint
-2. Batch Handler validates and processes each request
-3. Shared tokens are processed once for efficiency
-4. Engine generates individual responses for each request
-5. Batch Handler builds summary statistics and patterns
-6. API formats and returns batch response to client
+1. **Unit Testing**: Tests for individual components (overall coverage 72%)
+   - Privacy Engine (89% coverage)
+   - Session Manager (100% coverage)
+   - Token Intelligence Bridge (90% coverage)
+   - Manager (75% coverage)
 
-## Design Principles
+2. **Integration Testing**: Tests for component workflows
+   - Privacy workflow from content to tokenization to reconstruction
+   - Token consistency across multiple operations
+   - Session management and persistence
 
-1. **Privacy by Design**: The system works exclusively with anonymized tokens
-2. **Modularity**: Each component has a single responsibility
-3. **Extensibility**: Easy to add new intelligence generators
-4. **Performance**: Optimized for low latency (0-2ms per request)
-5. **Maintainability**: Clean architecture with well-defined interfaces
+3. **Performance Benchmarking**: Tests for performance characteristics
+   - Text deidentification (small: ~68μs, medium: ~285μs, large: ~2.67ms)
+   - Reconstruction (~19μs)
+   - Session operations (~76-133μs)
+   - Token consistency (~34μs)
+
+## Memory Model
+
+```
+┌───────────────┐           ┌───────────────┐
+│ Content Store │           │ Token Profiles│
+│               │           │               │
+│ - Notes       │           │ - Patterns    │
+│ - Todos       │           │ - Context     │
+│ - Events      │           │ - Frequency   │
+│ - Projects    │           │               │
+└───────┬───────┘           └───────┬───────┘
+        │                           │
+        v                           v
+┌───────────────────────────────┐   │
+│                               │   │
+│ Knowledge Base Manager        │◄──┘
+│ (with integrated privacy)     │
+│                               │
+└──────────────┬────────────────┘
+               │
+               │
+        ┌──────▼──────┐
+        │     UI      │
+        │             │
+        └─────────────┘
+```
+
+- **Content Store**: Persists content and metadata
+- **Token Profiles**: Stores token-based intelligence and patterns
+- **No Original Data**: Token profiles never contain original identifiable data
+
+## Configuration Architecture
+
+The system uses a hierarchical configuration system:
+
+1. **Default configurations**: Hardcoded sensible defaults
+2. **Configuration files**: YAML files for customization
+3. **Environment variables**: Override for deployment-specific settings
 
 ## Technical Considerations
 
-### Performance
+### Performance Optimizations
 
-The Token Intelligence System is designed for high performance:
-- **Response Time**: Typically 0-2ms per request
-- **Parallelization**: Batch processing optimizes shared token analysis
-- **Efficient Storage**: In-memory caching with persistent backing store
+The Knowledge Base System is designed for high performance:
 
-### Scalability
+1. **Batch Processing**:
+   - Parallel processing with ThreadPoolExecutor for multiple texts
+   - Error handling for batch processing failures
+   - Optimized for large workloads
 
-The modular design supports scaling:
-- **Horizontal Scaling**: API servers can be deployed across multiple instances
-- **Vertical Scaling**: Configuration options for memory and performance tuning
-- **Storage Scaling**: Separate storage backends can be used for high volume
+2. **Pre-compiled Regex Patterns**:
+   - Regex patterns compiled at initialization
+   - Avoiding compilation overhead during processing
+   - Optimized pattern structure for faster matching
+
+3. **Caching Layers**:
+   - Memory caching with TTL for token intelligence results
+   - Disk caching for persistence between sessions
+   - Efficient cache invalidation mechanisms
+
+4. **Token Processing**:
+   - Optimized pattern matching for faster entity detection
+   - Efficient token counter management
+   - Optimized text reconstruction algorithms
 
 ### Security
 
@@ -235,14 +351,9 @@ Privacy protection is fundamental:
 - **No Original Data**: Works only with privacy tokens, never original data
 - **Token Storage**: Profiles stored securely without original data references
 - **API Security**: Validation prevents malformed or malicious requests
+- **Perfect Session Isolation**: Complete privacy boundaries between usage contexts
 
-## Integration Points
-
-1. **Knowledge Base**: Integrates with the Knowledge Base Manager
-2. **Personal Data Intelligence**: Works with the Personal Data Intelligence Tracker
-3. **Sankofa Privacy Layer**: Designed to integrate with privacy transformation systems
-
-## Deployment Architecture
+## Deployment Options
 
 ### 1. Local Deployment
 ```bash
@@ -258,15 +369,11 @@ python3 api_server.py
 - Load balancing
 - Health monitoring
 
-## Success Metrics
+## Technical Stack
 
-- **Performance**: 0-2ms processing time, 1000+ requests/second
-- **Privacy**: 100% token-only processing, zero data exposure
-- **Intelligence**: Rich contextual insights with >90% relevance
-
-## Future Architecture Extensions
-
-1. **Distributed Processing**: Scale to multiple processing nodes
-2. **ML-Based Intelligence**: Integrate ML models for advanced pattern detection
-3. **Real-time Streaming**: Support for streaming intelligence updates
-4. **Cross-User Intelligence**: Privacy-safe intelligence sharing across users (organizational) 
+- **Language**: Python 3.8+
+- **API**: FastAPI/Flask
+- **Storage**: File-based with JSON and Markdown
+- **Configuration**: YAML
+- **Testing**: pytest ecosystem (pytest, pytest-cov, pytest-mock, pytest-benchmark)
+- **Packaging**: Standard Python packaging 
