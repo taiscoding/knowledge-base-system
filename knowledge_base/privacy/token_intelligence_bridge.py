@@ -6,14 +6,17 @@ Handles integration between the privacy layer and the token intelligence system.
 
 import logging
 import importlib.util
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple, Set
 import re
 import hashlib
 import json
 from functools import lru_cache
 from datetime import datetime, timedelta
 import os
+import heapq
 from pathlib import Path
+import threading
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +29,243 @@ class DummyTokenIntelligenceResponse:
         self.intelligence_type = "unavailable"
         self.source = "fallback"
         self.processing_time_ms = 0
+
+
+class CacheEntry:
+    """Cache entry with metadata for multi-level caching."""
+    def __init__(self, key: str, value: Any, priority: float = 0.0):
+        self.key = key
+        self.value = value
+        self.priority = priority  # Higher values = higher priority
+        self.last_access_time = datetime.now()
+        self.access_count = 1
+        self.created_at = datetime.now()
+    
+    def update_access(self):
+        """Update access information when entry is used."""
+        self.last_access_time = datetime.now()
+        self.access_count += 1
+        # Adjust priority based on recency and frequency
+        time_factor = 1.0  # Recent accesses weight more
+        count_factor = 0.1  # Frequently accessed items weight more
+        self.priority = (
+            time_factor * (datetime.now() - self.created_at).total_seconds() + 
+            count_factor * self.access_count
+        )
+    
+    def __lt__(self, other):
+        """Compare entries based on priority for heap operations."""
+        return self.priority < other.priority
+
+
+class MultiLevelCache:
+    """
+    Multi-level cache implementation for token intelligence.
+    
+    Implements a priority-based caching system with in-memory and disk layers.
+    """
+    
+    def __init__(self, max_memory_entries: int = 1000, cache_dir: str = None, ttl: int = 3600):
+        """
+        Initialize the multi-level cache.
+        
+        Args:
+            max_memory_entries: Maximum number of entries in the memory cache
+            cache_dir: Directory for disk cache (None to disable)
+            ttl: Time-to-live for cache entries in seconds
+        """
+        self.max_memory_entries = max_memory_entries
+        self.cache_dir = cache_dir
+        self.ttl = ttl
+        
+        # In-memory cache as a dictionary
+        self.memory_cache: Dict[str, CacheEntry] = {}
+        
+        # Priority queue for eviction policy
+        self.priority_heap: List[Tuple[float, str]] = []
+        
+        # Lock for thread safety
+        self.cache_lock = threading.RLock()
+        
+        # Create cache directory if specified
+        if self.cache_dir:
+            os.makedirs(self.cache_dir, exist_ok=True)
+    
+    def get(self, key: str) -> Optional[Any]:
+        """
+        Get item from cache.
+        
+        Args:
+            key: Cache key
+            
+        Returns:
+            Value if found and not expired, None otherwise
+        """
+        now = datetime.now()
+        
+        # Check memory cache first
+        with self.cache_lock:
+            if key in self.memory_cache:
+                entry = self.memory_cache[key]
+                
+                # Check if expired
+                if now - entry.last_access_time > timedelta(seconds=self.ttl):
+                    # Remove expired entry
+                    self._remove_entry(key)
+                    return None
+                
+                # Update access information
+                entry.update_access()
+                return entry.value
+        
+        # Check disk cache if enabled
+        if self.cache_dir:
+            disk_value = self._get_from_disk(key)
+            if disk_value is not None:
+                # Add to memory cache for future access
+                self.put(key, disk_value)
+                return disk_value
+        
+        return None
+    
+    def put(self, key: str, value: Any) -> None:
+        """
+        Add item to cache.
+        
+        Args:
+            key: Cache key
+            value: Value to cache
+        """
+        with self.cache_lock:
+            # If already in cache, just update
+            if key in self.memory_cache:
+                entry = self.memory_cache[key]
+                entry.value = value
+                entry.update_access()
+                return
+            
+            # Create new cache entry
+            entry = CacheEntry(key, value)
+            self.memory_cache[key] = entry
+            
+            # Add to priority heap
+            heapq.heappush(self.priority_heap, (entry.priority, key))
+            
+            # Check if we need to evict entries
+            self._evict_if_needed()
+            
+            # Save to disk if enabled
+            if self.cache_dir:
+                self._save_to_disk(key, value)
+    
+    def _evict_if_needed(self) -> None:
+        """Evict entries if cache is full."""
+        while len(self.memory_cache) > self.max_memory_entries and self.priority_heap:
+            # Get the lowest priority entry
+            _, key = heapq.heappop(self.priority_heap)
+            
+            # Key might have been removed already
+            if key not in self.memory_cache:
+                continue
+            
+            # Remove from memory cache
+            self._remove_entry(key)
+    
+    def _remove_entry(self, key: str) -> None:
+        """Remove an entry from memory cache."""
+        if key in self.memory_cache:
+            del self.memory_cache[key]
+    
+    def _get_from_disk(self, key: str) -> Optional[Any]:
+        """Get value from disk cache."""
+        if not self.cache_dir:
+            return None
+        
+        cache_file = Path(self.cache_dir) / f"{key}.json"
+        if not cache_file.exists():
+            return None
+        
+        try:
+            with open(cache_file, 'r') as f:
+                cache_data = json.load(f)
+            
+            # Check if entry is expired
+            timestamp = datetime.fromisoformat(cache_data.get('timestamp', '2000-01-01'))
+            if datetime.now() - timestamp > timedelta(seconds=self.ttl):
+                # Remove expired cache file
+                cache_file.unlink(missing_ok=True)
+                return None
+            
+            return cache_data.get('value')
+        except Exception as e:
+            logger.warning(f"Error reading disk cache: {e}")
+            return None
+    
+    def _save_to_disk(self, key: str, value: Any) -> None:
+        """Save value to disk cache."""
+        if not self.cache_dir:
+            return
+        
+        cache_file = Path(self.cache_dir) / f"{key}.json"
+        try:
+            cache_data = {
+                'value': value,
+                'timestamp': datetime.now().isoformat()
+            }
+            with open(cache_file, 'w') as f:
+                json.dump(cache_data, f)
+        except Exception as e:
+            logger.warning(f"Error writing to disk cache: {e}")
+    
+    def clear(self, older_than: Optional[int] = None) -> None:
+        """
+        Clear cache entries.
+        
+        Args:
+            older_than: Clear entries older than this many seconds (None for all)
+        """
+        now = datetime.now()
+        
+        with self.cache_lock:
+            if older_than is None:
+                # Clear all
+                self.memory_cache = {}
+                self.priority_heap = []
+            else:
+                # Clear only entries older than specified time
+                cutoff = now - timedelta(seconds=older_than)
+                
+                # Remove old entries from memory cache
+                keys_to_remove = [
+                    key for key, entry in self.memory_cache.items()
+                    if entry.last_access_time < cutoff
+                ]
+                
+                for key in keys_to_remove:
+                    self._remove_entry(key)
+                
+                # Rebuild priority heap
+                self.priority_heap = [(entry.priority, key) for key, entry in self.memory_cache.items()]
+                heapq.heapify(self.priority_heap)
+        
+        # Clear disk cache if enabled
+        if self.cache_dir:
+            try:
+                cache_dir = Path(self.cache_dir)
+                for cache_file in cache_dir.glob("*.json"):
+                    try:
+                        if older_than is None:
+                            # Remove all files
+                            cache_file.unlink()
+                        else:
+                            # Check file modification time
+                            file_modified = datetime.fromtimestamp(cache_file.stat().st_mtime)
+                            if file_modified < cutoff:
+                                cache_file.unlink()
+                    except Exception as e:
+                        logger.warning(f"Error clearing cache file {cache_file}: {e}")
+            except Exception as e:
+                logger.warning(f"Error clearing disk cache: {e}")
 
 
 class TokenIntelligenceBridge:
@@ -43,15 +283,15 @@ class TokenIntelligenceBridge:
         self.token_intelligence_engine = None
         self.token_intelligence_request_class = None
         
-        # Initialize cache settings
-        self.cache_dir = cache_dir
-        self.cache_ttl = cache_ttl
-        self.memory_cache = {}
-        self.cache_timestamps = {}
+        # Initialize cache system
+        self.cache = MultiLevelCache(
+            max_memory_entries=1000,
+            cache_dir=cache_dir,
+            ttl=cache_ttl
+        )
         
-        # Create cache directory if specified
-        if self.cache_dir:
-            os.makedirs(self.cache_dir, exist_ok=True)
+        # Patterns for token extraction (precompiled for performance)
+        self.token_pattern = re.compile(r'\[([A-Z_]+(?:_\d+)?)\]')
         
         # Try to import token intelligence
         self._try_import_token_intelligence()
@@ -100,78 +340,6 @@ class TokenIntelligenceBridge:
         request_str = json.dumps(request_data, sort_keys=True)
         return hashlib.md5(request_str.encode()).hexdigest()
     
-    def _get_from_cache(self, cache_key: str) -> Optional[Dict[str, Any]]:
-        """
-        Get intelligence from cache if available and not expired.
-        
-        Args:
-            cache_key: Cache key
-            
-        Returns:
-            Intelligence dict if cached, None otherwise
-        """
-        # Check memory cache first
-        if cache_key in self.memory_cache:
-            # Check if cache entry is expired
-            cache_time = self.cache_timestamps.get(cache_key)
-            if cache_time and datetime.now() - cache_time < timedelta(seconds=self.cache_ttl):
-                return self.memory_cache[cache_key]
-            else:
-                # Remove expired entry
-                if cache_key in self.memory_cache:
-                    del self.memory_cache[cache_key]
-                if cache_key in self.cache_timestamps:
-                    del self.cache_timestamps[cache_key]
-        
-        # Check disk cache if enabled
-        if self.cache_dir:
-            cache_file = Path(self.cache_dir) / f"{cache_key}.json"
-            if cache_file.exists():
-                try:
-                    with open(cache_file, 'r') as f:
-                        cache_data = json.load(f)
-                    
-                    # Check if cache entry is expired
-                    cache_time = datetime.fromisoformat(cache_data.get('timestamp', '2000-01-01'))
-                    if datetime.now() - cache_time < timedelta(seconds=self.cache_ttl):
-                        # Store in memory cache for faster access next time
-                        intelligence = cache_data.get('intelligence', {})
-                        self.memory_cache[cache_key] = intelligence
-                        self.cache_timestamps[cache_key] = cache_time
-                        return intelligence
-                    else:
-                        # Remove expired cache file
-                        cache_file.unlink(missing_ok=True)
-                except Exception as e:
-                    logger.warning(f"Error reading cache file: {e}")
-        
-        return None
-    
-    def _save_to_cache(self, cache_key: str, intelligence: Dict[str, Any]):
-        """
-        Save intelligence to cache.
-        
-        Args:
-            cache_key: Cache key
-            intelligence: Intelligence dict to cache
-        """
-        # Save to memory cache
-        self.memory_cache[cache_key] = intelligence
-        self.cache_timestamps[cache_key] = datetime.now()
-        
-        # Save to disk cache if enabled
-        if self.cache_dir:
-            cache_file = Path(self.cache_dir) / f"{cache_key}.json"
-            try:
-                cache_data = {
-                    'intelligence': intelligence,
-                    'timestamp': datetime.now().isoformat()
-                }
-                with open(cache_file, 'w') as f:
-                    json.dump(cache_data, f)
-            except Exception as e:
-                logger.warning(f"Error writing cache file: {e}")
-    
     def generate_intelligence(self, 
                              privacy_text: str, 
                              session_id: str,
@@ -193,10 +361,13 @@ class TokenIntelligenceBridge:
         cache_key = self._generate_cache_key(privacy_text, preserved_context, entity_relationships)
         
         # Check if we have cached intelligence
-        cached_intelligence = self._get_from_cache(cache_key)
+        cached_intelligence = self.cache.get(cache_key)
         if cached_intelligence:
             logger.debug("Using cached intelligence")
             return cached_intelligence
+        
+        # Extract token information for more targeted intelligence generation
+        tokens = self.extract_tokens(privacy_text)
         
         # No cached data, generate intelligence
         intelligence = {}
@@ -209,7 +380,8 @@ class TokenIntelligenceBridge:
                     privacy_text=privacy_text,
                     session_id=session_id,
                     preserved_context=preserved_context,
-                    entity_relationships=entity_relationships
+                    entity_relationships=entity_relationships,
+                    tokens=tokens  # Pass extracted tokens for optimization
                 )
                 
                 # Generate intelligence
@@ -217,29 +389,30 @@ class TokenIntelligenceBridge:
                 intelligence = response.intelligence
             except Exception as e:
                 logger.error(f"Error generating token intelligence: {e}")
-                intelligence = self._generate_fallback_intelligence(privacy_text)
+                intelligence = self._generate_fallback_intelligence(privacy_text, tokens)
         else:
-            intelligence = self._generate_fallback_intelligence(privacy_text)
+            intelligence = self._generate_fallback_intelligence(privacy_text, tokens)
         
         # Cache the generated intelligence
-        self._save_to_cache(cache_key, intelligence)
+        self.cache.put(cache_key, intelligence)
         
         return intelligence
     
-    def _generate_fallback_intelligence(self, privacy_text: str) -> Dict[str, Any]:
+    def _generate_fallback_intelligence(self, privacy_text: str, tokens: Optional[List[str]] = None) -> Dict[str, Any]:
         """
         Generate basic fallback intelligence when token intelligence isn't available.
         
         Args:
             privacy_text: Text with privacy tokens
+            tokens: Pre-extracted tokens (optional)
             
         Returns:
             Basic token intelligence dictionary
         """
         intelligence = {}
         
-        # Extract tokens from privacy text
-        tokens = re.findall(r'\[([A-Z_]+(?:_\d+)?)\]', privacy_text)
+        # Extract tokens from privacy text if not provided
+        tokens = tokens or self.extract_tokens(privacy_text)
         
         # Generate basic intelligence for each token
         for token in tokens:
@@ -262,8 +435,26 @@ class TokenIntelligenceBridge:
         
         return intelligence
     
+    @lru_cache(maxsize=100)
+    def extract_tokens(self, text: str) -> List[str]:
+        """
+        Extract token identifiers from privacy text.
+        
+        Args:
+            text: Text with privacy tokens
+            
+        Returns:
+            List of token identifiers
+        """
+        if not text:
+            return []
+            
+        # Extract tokens using precompiled pattern
+        return list(set(self.token_pattern.findall(text)))
+    
     def enhance_privacy_text(self, 
                             privacy_text: str, 
+                            session_id: str = "enhancement_session",
                             preserved_context: List[str] = None,
                             entity_relationships: Dict[str, Any] = None) -> str:
         """
@@ -271,6 +462,7 @@ class TokenIntelligenceBridge:
         
         Args:
             privacy_text: Text with privacy tokens
+            session_id: Session ID for intelligence generation
             preserved_context: List of context keywords
             entity_relationships: Dictionary of entity relationships
             
@@ -284,16 +476,18 @@ class TokenIntelligenceBridge:
         if entity_relationships is None:
             entity_relationships = {}
             
+        # Extract tokens upfront
+        tokens = self.extract_tokens(privacy_text)
+        if not tokens:
+            return privacy_text
+            
         # Get intelligence for tokens
         intelligence = self.generate_intelligence(
             privacy_text, 
-            "enhancement_session",  # Use fixed session ID for enhancement 
+            session_id,
             preserved_context, 
             entity_relationships
         )
-        
-        # Extract tokens from text
-        tokens = re.findall(r'\[([A-Z_]+(?:_\d+)?)\]', privacy_text)
         
         # Create enhanced prompt with context
         enhanced_text = privacy_text
@@ -320,41 +514,4 @@ class TokenIntelligenceBridge:
         Args:
             older_than: Clear entries older than this many seconds (None for all)
         """
-        now = datetime.now()
-        
-        # Clear memory cache
-        if older_than:
-            # Remove entries older than specified time
-            expired_keys = [
-                key for key, timestamp in self.cache_timestamps.items()
-                if now - timestamp > timedelta(seconds=older_than)
-            ]
-            for key in expired_keys:
-                if key in self.memory_cache:
-                    del self.memory_cache[key]
-                if key in self.cache_timestamps:
-                    del self.cache_timestamps[key]
-        else:
-            # Clear all entries
-            self.memory_cache = {}
-            self.cache_timestamps = {}
-        
-        # Clear disk cache if enabled
-        if self.cache_dir:
-            cache_dir = Path(self.cache_dir)
-            if older_than:
-                # Remove files older than specified time
-                for cache_file in cache_dir.glob("*.json"):
-                    try:
-                        file_modified = datetime.fromtimestamp(cache_file.stat().st_mtime)
-                        if now - file_modified > timedelta(seconds=older_than):
-                            cache_file.unlink()
-                    except Exception as e:
-                        logger.warning(f"Error clearing cache file {cache_file}: {e}")
-            else:
-                # Remove all cache files
-                for cache_file in cache_dir.glob("*.json"):
-                    try:
-                        cache_file.unlink()
-                    except Exception as e:
-                        logger.warning(f"Error clearing cache file {cache_file}: {e}") 
+        self.cache.clear(older_than) 
