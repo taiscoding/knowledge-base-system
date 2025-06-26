@@ -9,7 +9,9 @@ from datetime import datetime, timezone, timedelta
 from knowledge_base.utils.helpers import (
     generate_id, get_timestamp, extract_hashtags, 
     extract_mentions, parse_date_string, detect_content_type,
-    format_filename, sanitize_filename
+    format_filename, sanitize_filename,
+    KnowledgeBaseError, ContentProcessingError, StorageError, 
+    ConfigurationError, PrivacyError, ValidationError, NotFoundError, RecoveryError
 )
 
 
@@ -209,3 +211,92 @@ class TestHelperFunctions:
         
         for original, expected in invalid_filenames.items():
             assert sanitize_filename(original) == expected 
+
+
+class TestExceptionHierarchy:
+    """Test the exception hierarchy implementation."""
+    
+    def test_base_error(self):
+        """Test KnowledgeBaseError as base exception."""
+        error = KnowledgeBaseError()
+        assert isinstance(error, Exception)
+        assert str(error) == "An error occurred in the knowledge base system"
+        
+        custom_error = KnowledgeBaseError("Custom message")
+        assert str(custom_error) == "Custom message"
+    
+    def test_content_processing_error(self):
+        """Test ContentProcessingError."""
+        error = ContentProcessingError()
+        assert isinstance(error, KnowledgeBaseError)
+        assert str(error) == "Error processing content"
+        
+        custom_error = ContentProcessingError("Failed to extract content")
+        assert str(custom_error) == "Failed to extract content"
+    
+    def test_storage_error(self):
+        """Test StorageError."""
+        error = StorageError()
+        assert isinstance(error, KnowledgeBaseError)
+        assert str(error) == "Error accessing storage"
+        
+        custom_error = StorageError("Could not write to file")
+        assert str(custom_error) == "Could not write to file"
+    
+    def test_configuration_error(self):
+        """Test ConfigurationError."""
+        error = ConfigurationError()
+        assert isinstance(error, KnowledgeBaseError)
+        assert str(error) == "Invalid configuration"
+        
+        custom_error = ConfigurationError("Missing required config")
+        assert str(custom_error) == "Missing required config"
+    
+    def test_privacy_error(self):
+        """Test PrivacyError."""
+        error = PrivacyError()
+        assert isinstance(error, KnowledgeBaseError)
+        assert str(error) == "Privacy component error"
+        
+        custom_error = PrivacyError("Failed to anonymize content")
+        assert str(custom_error) == "Failed to anonymize content"
+    
+    def test_validation_error(self):
+        """Test ValidationError."""
+        error = ValidationError()
+        assert isinstance(error, KnowledgeBaseError)
+        assert str(error) == "Data validation failed"
+        
+        custom_error = ValidationError("Invalid input format")
+        assert str(custom_error) == "Invalid input format"
+    
+    def test_not_found_error(self):
+        """Test NotFoundError."""
+        error = NotFoundError()
+        assert isinstance(error, KnowledgeBaseError)
+        assert str(error) == "Resource not found"
+        
+        custom_error = NotFoundError("File not found")
+        assert str(custom_error) == "File not found"
+    
+    def test_recovery_error(self):
+        """Test RecoveryError."""
+        error = RecoveryError()
+        assert isinstance(error, KnowledgeBaseError)
+        assert str(error) == "Recovery failed"
+        
+        custom_error = RecoveryError("Failed to recover from previous error")
+        assert str(custom_error) == "Failed to recover from previous error"
+    
+    def test_error_hierarchy(self):
+        """Test proper exception hierarchy."""
+        # All errors should be catchable as KnowledgeBaseError
+        try:
+            raise ContentProcessingError("Test error")
+        except KnowledgeBaseError as e:
+            assert "Test error" in str(e)
+        
+        try:
+            raise StorageError("Test error")
+        except KnowledgeBaseError as e:
+            assert "Test error" in str(e) 

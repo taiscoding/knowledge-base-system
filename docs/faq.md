@@ -1,256 +1,281 @@
-# Frequently Asked Questions
+# Knowledge Base System: Frequently Asked Questions
 
-This document answers common questions about the Knowledge Base & Token Intelligence System.
+## General
 
-## General Questions
+### What is the Knowledge Base System?
+The Knowledge Base System is a tool for organizing and processing unstructured content into structured, searchable information while maintaining privacy. It extracts todos, events, notes, and other content types from raw text.
 
-### What is the Knowledge Base & Token Intelligence System?
+### What are the main features?
+- Content extraction and organization
+- Privacy protection for sensitive information
+- Token intelligence for privacy-safe insights
+- Searching across different content types
+- Integration with other applications via API
 
-The Knowledge Base & Token Intelligence System is a privacy-first knowledge management system that combines intuitive organization with privacy-preserving intelligence. It helps you organize notes, tasks, events, and other content while generating insights without exposing your sensitive information.
+### What programming languages/platforms are supported?
+The system is built in Python and can be used in any Python environment (3.8+). The API server allows integration with any programming language or platform that can make HTTP requests.
 
-### How is this different from other note-taking or knowledge management tools?
+## Setup and Installation
 
-Unlike traditional knowledge management tools that process all your data directly, our system is built around privacy by design. The key differences are:
-
-1. **Privacy-First Architecture**: Your sensitive information is tokenized before processing
-2. **Token Intelligence**: The system generates insights from tokens without seeing original data
-3. **Seamless Integration**: Privacy layer, knowledge base, and intelligence work together
-4. **Contextual Understanding**: The system understands relationships between content without compromising privacy
-
-### Is the system open source?
-
-Yes, the Knowledge Base & Token Intelligence System is open source under the MIT license. You can find the code on GitHub, contribute to the project, and use it for your own purposes.
-
-## Privacy Questions
-
-### How does the privacy tokenization work?
-
-The privacy tokenization process works as follows:
-
-1. Your sensitive information (names, locations, etc.) is identified
-2. Each piece of sensitive information is replaced with a token (e.g., `[PERSON_001]`)
-3. Only these tokens are processed by the intelligence system
-4. The mapping between tokens and original data is kept in the Sankofa privacy layer
-5. When results are returned, tokens are replaced with the original information
-
-### Can I trust that my sensitive information is really protected?
-
-Yes. The system architecture ensures that:
-
-1. Token Intelligence never sees your original data
-2. No original data is stored in the intelligence system
-3. All processing is done on tokens only
-4. Tokens cannot be reverse-engineered to reveal original data
-
-You can verify these claims by reviewing our code, inspecting the data flows, and checking our privacy validation tests.
-
-### What is the Sankofa Privacy Layer?
-
-Sankofa is our specialized privacy layer that handles tokenization and protects your sensitive information. It:
-
-1. Tokenizes sensitive information in your content
-2. Maintains the mapping between tokens and original data
-3. Ensures consistent token mapping within sessions
-4. Detokenizes results before presenting them to you
-
-## Usage Questions
-
-### How do I add content to the knowledge base?
-
-You can add content through:
-
-1. **Stream of Consciousness**: Just write naturally and let the system organize it
-   ```python
-   kb.process_stream_of_consciousness("Need to meet with John about the project tomorrow")
-   ```
-
-2. **CLI Interface**: Use the command-line interface
-   ```bash
-   kb-cli add "Need to meet with John about the project tomorrow"
-   ```
-
-3. **API**: Make direct API calls for integration with other systems
-
-### Can I search across different types of content?
-
-Yes! You can search across all content types or filter by specific types:
-
-```python
-# Search all content
-results = kb.search_content("project")
-
-# Search only todos
-todo_results = kb.search_content("project", content_type="todos")
-```
-
-With the CLI:
+### How do I install the Knowledge Base System?
 ```bash
-kb-cli search "project"
-kb-cli search "project" --type todo
-```
+# Via pip
+pip install knowledge-base-system
 
-### How do I export my data?
-
-You can export your data through:
-
-1. **Privacy-Preserving Export**: Exports with privacy protection
-   ```python
-   privacy_integration.export_to_privacy_bundle()
-   ```
-
-2. **CLI Export**: Command-line export
-   ```bash
-   kb-cli export --privacy
-   ```
-
-3. **Direct File Access**: Access your knowledge base files directly
-
-### What types of content can I store?
-
-The system supports multiple content types:
-
-1. **Notes**: General text notes and information
-2. **Todos**: Task items with status, due dates, priorities
-3. **Calendar Events**: Time-based events with duration, location
-4. **Projects**: Collections of related content items
-5. **References**: Links to external resources
-
-## Technical Questions
-
-### How is the knowledge base organized?
-
-The knowledge base organizes content by:
-
-1. **Type**: Content is stored in appropriate directories by type (notes, todos, etc.)
-2. **Tags**: Content can be tagged for cross-cutting organization
-3. **Categories**: Higher-level grouping of related content
-4. **Relationships**: Content items can reference other items
-
-### How does the token intelligence work without seeing my data?
-
-Token intelligence works through:
-
-1. **Context Preservation**: When tokenizing, contextual information is preserved
-2. **Token Patterns**: The system analyzes patterns in how tokens are used
-3. **Relationship Mapping**: Relationships between tokens are tracked
-4. **Historical Analysis**: The system learns from token usage over time
-
-### Can I host this system myself?
-
-Yes, the system is designed to be self-hosted. You'll need:
-
-1. Python 3.8+ installed on your system
-2. Basic knowledge of command-line usage
-3. Storage space for your knowledge base content
-4. Optional: Web server for API access
-
-## Integration Questions
-
-### Can I use this with my existing tools?
-
-Yes, the system is designed for integration:
-
-1. **API Access**: Use the REST API to integrate with other applications
-2. **File-Based Storage**: Direct access to the knowledge base files
-3. **Import/Export**: Import from and export to other formats
-4. **Plugins**: Planned integrations with popular productivity tools
-
-### How do I integrate the privacy layer with my application?
-
-To integrate with the privacy layer:
-
-1. Install the Sankofa client package
-2. Configure the integration in your application
-3. Use the client to tokenize sensitive content
-4. Pass tokenized content to the Knowledge Base or Token Intelligence
-5. Use the client to detokenize responses
-
-See the [Integration Guide](integration_guide.md) for detailed instructions.
-
-### Can I extend the system with my own intelligence generators?
-
-Yes, the system is designed to be extensible. You can:
-
-1. Create new intelligence generators for specific token types
-2. Add custom analyzers for specialized patterns
-3. Implement domain-specific relationship detectors
-4. Connect with other AI services through the API
-
-## Troubleshooting
-
-### Why am I not getting any intelligence results?
-
-Possible causes:
-
-1. **No Tokens**: Your content doesn't contain any recognizable tokens
-2. **Token Format**: Tokens must follow the format `[TYPE_ID]`
-3. **Session Consistency**: Check if you're using consistent session IDs
-4. **Context Missing**: Provide more context for better intelligence
-
-### How do I report issues or request features?
-
-To report issues or request features:
-
-1. **GitHub Issues**: Submit an issue on our GitHub repository
-2. **Community Forum**: Post on our community forum
-3. **Contact Us**: Email our support team
-4. **Contributing**: Submit a pull request with your improvements
-
-### How do I update to the latest version?
-
-```bash
-# Update via pip
-pip install -U knowledge-base-system
-
-# Or update from source
-git pull origin main
+# Or from source
+git clone https://github.com/yourorg/knowledge-base-system.git
+cd knowledge-base-system
 pip install -e .
 ```
 
-## Performance Questions
+### What are the system requirements?
+- Python 3.8 or higher
+- 4GB RAM (minimum)
+- 100MB disk space (plus space for your content)
 
-### How much data can the system handle?
+### How do I configure the system?
+Configuration is managed through:
+- YAML files in the `config/` directory
+- Environment variables (prefixed with `KB_`)
+- Command-line arguments for the CLI
 
-The system is designed to be efficient with resources:
+## Usage
 
-1. **Knowledge Base**: Can handle thousands of content items
-2. **Token Intelligence**: Processes requests in < 2ms
-3. **Storage**: Uses efficient file-based storage
-4. **Memory Usage**: Minimal footprint with on-demand loading
+### How do I process content?
+```python
+from knowledge_base import KnowledgeBaseManager
 
-For very large deployments, consider implementing a database backend.
+kb = KnowledgeBaseManager()
+result = kb.process_stream_of_consciousness(
+    "Need to call John about Project X tomorrow at 2pm"
+)
+```
 
-### Will it work on my computer?
+### How do I search for content?
+```python
+# Search across all content types
+results = kb.search_content("project")
 
-The system has minimal requirements:
+# Search specific content type
+todo_results = kb.search_content("project", content_type="todos")
+```
 
-1. **Operating System**: Works on Windows, macOS, and Linux
-2. **Python**: Requires Python 3.8+
-3. **Disk Space**: Minimal for the code, scales with your content
-4. **Memory**: 256MB minimum, 1GB recommended for larger knowledge bases
+### Can I use it with my existing note-taking app?
+Yes, you can integrate the Knowledge Base System with other applications:
+- Use the Python API in your application
+- Use the HTTP API for non-Python applications
+- Process exported notes from your existing system
 
-## Future Development
+## Privacy Features
 
-### What features are planned for future releases?
+### How does the privacy protection work?
+The system detects sensitive information (names, emails, projects, etc.) and replaces them with tokens like `[PERSON_001]`. Original values are stored securely and only reconstituted when needed.
 
-See our [Project Roadmap](roadmap.md) for details on planned features, including:
+### What privacy levels are available?
+- **Minimal**: Basic entity detection (names, emails)
+- **Standard**: Comprehensive entity detection (default)
+- **Enhanced**: Maximum privacy with additional context analysis
 
-1. Semantic search capabilities
-2. Web and mobile interfaces
-3. Enhanced intelligence generators
-4. Multi-user collaboration
-5. Advanced privacy features
+### Can I use my own privacy rules?
+Yes, you can configure privacy rules in `config/sankofa_integration.yaml` to customize entity detection and tokenization.
+
+## Error Handling and Troubleshooting
+
+### What types of errors can I expect from the system?
+The system uses a comprehensive error hierarchy:
+
+- `KnowledgeBaseError`: Base class for all errors
+- `ConfigurationError`: Issues with configuration files or settings
+- `StorageError`: Problems with file I/O operations
+- `ContentProcessingError`: Failures in content extraction
+- `PrivacyError`: Issues with privacy operations
+- `ValidationError`: Input validation failures
+- `NotFoundError`: Requested resources not found
+- `RecoveryError`: Failed recovery attempts
+
+### How do I debug issues with the Knowledge Base?
+Enable detailed logging to see what's happening:
+
+```python
+import logging
+logging.getLogger('knowledge_base').setLevel(logging.DEBUG)
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+logging.getLogger('knowledge_base').addHandler(handler)
+```
+
+### What is the circuit breaker pattern and why is it used?
+The circuit breaker pattern is a fault tolerance mechanism that prevents cascading failures by monitoring for failures and "tripping" (like an electrical circuit breaker) when failures exceed a threshold. This:
+
+1. Prevents overwhelming failing components/services
+2. Allows for graceful degradation 
+3. Enables automatic recovery testing
+
+The Knowledge Base uses circuit breakers for critical operations like privacy processing and external service calls.
+
+### What happens when a circuit breaker "trips"?
+When a circuit breaker trips (enters the OPEN state):
+1. Requests to that component are immediately rejected
+2. Fallback mechanisms are triggered where available
+3. After a timeout period, the circuit enters HALF-OPEN state
+4. Some test traffic is allowed through to see if the issue is resolved
+5. If successful, the circuit closes; if still failing, it returns to OPEN
+
+### How can I check the status of circuit breakers?
+Via the API:
+```bash
+curl http://localhost:5000/api/v1/system/circuit-breakers
+```
+
+Or programmatically:
+```python
+from knowledge_base.privacy.circuit_breaker import CircuitBreakerRegistry
+status = CircuitBreakerRegistry.get_instance().get_status()
+```
+
+### Why am I getting "CircuitBreakerOpenError" errors?
+This means a component is experiencing failures and the circuit breaker has tripped. Options:
+1. Wait for automatic recovery
+2. Use a fallback mechanism
+3. Manually reset the circuit breaker if you're sure the issue is resolved
+
+### How do I reset a circuit breaker?
+Via the API:
+```bash
+curl -X POST http://localhost:5000/api/v1/system/circuit-breakers/reset
+```
+
+Or programmatically:
+```python
+from knowledge_base.privacy.circuit_breaker import CircuitBreakerRegistry
+CircuitBreakerRegistry.get_instance().reset_all()
+```
+
+### What fallback mechanisms are available when components fail?
+1. **Privacy Engine Fallbacks**:
+   - Minimal privacy processing when full processing fails
+   - Reuse of existing tokens when intelligence services are unavailable
+   - Preservation of original text when reconstruction fails
+
+2. **Content Processing Fallbacks**:
+   - Default values for tag extraction failures
+   - Safe title generation when parsing fails
+   - Conservative behavior with incomplete data
+
+3. **Storage Fallbacks**:
+   - In-memory operation when persistence fails
+   - Automatic retry logic for transient errors
+
+## Performance
+
+### How can I optimize performance?
+- Process content in batches rather than individually
+- Use appropriate privacy levels (higher levels require more processing)
+- Configure caching for frequently accessed content
+- Consider the circuit breaker patterns and timeout configurations
+
+### What's the recommended batch size for processing?
+For optimal performance, process 10-50 items in a batch. Larger batches may improve throughput but increase memory usage and latency.
+
+### How does the system handle high load?
+The system uses:
+- Batch processing for efficiency
+- Circuit breakers to prevent cascading failures
+- Caching mechanisms for frequently accessed data
+- Fallback behaviors when components are overloaded
+
+## Integration
+
+### How do I integrate with other applications?
+1. **Python applications**: Import and use the `KnowledgeBaseManager` class directly
+2. **Non-Python applications**: Use the REST API provided by the API server
+3. **Data import/export**: Use the export/import functionality to exchange data
+
+### How do I build a frontend for the Knowledge Base?
+You can build a frontend using the REST API. Simply:
+1. Start the API server: `kb-api-server`
+2. Make HTTP requests to the API endpoints
+3. Handle the JSON responses in your frontend code
+
+### Does the Knowledge Base support webhooks or callbacks?
+Not currently, but you can implement polling using the API to check for changes.
+
+## Advanced Topics
+
+### How does token intelligence work?
+The Token Intelligence system analyzes patterns and relationships between tokenized entities without accessing the original data. It can:
+- Identify relationships between entities
+- Generate context-appropriate suggestions
+- Enhance content with additional metadata
+
+### Can I extend the system with custom content types?
+Yes, you can extend the system by:
+1. Creating new content type classes
+2. Registering them with the content type registry
+3. Adding extraction patterns for your content type
+
+### Is there a plugin system?
+There's no formal plugin system yet, but you can extend the core classes to add functionality. A proper plugin system is planned for future releases.
+
+### How do I migrate from legacy privacy.py to modern components?
+The system includes adapter classes that provide backward compatibility. To migrate:
+
+1. First, update imports to use the adapter classes:
+   ```python
+   # Instead of
+   from knowledge_base.privacy import PrivacyIntegration
+   
+   # Use
+   from knowledge_base.privacy.adapter import PrivacyIntegrationAdapter as PrivacyIntegration
+   ```
+
+2. Then, gradually update code to use the modern components directly:
+   ```python
+   from knowledge_base.privacy.smart_anonymization import SmartAnonymizer
+   from knowledge_base.privacy.session_manager import PrivacySessionManager
+   ```
+
+Legacy components will emit deprecation warnings to help identify code that needs migration.
+
+## Troubleshooting
+
+### Why am I getting ConfigurationError?
+Check that your configuration files exist and are valid YAML:
+```bash
+ls -la config/
+python -c "import yaml; yaml.safe_load(open('config/ai_instructions.yaml'))"
+```
+
+### Why isn't my content being saved?
+Check storage permissions and paths:
+```bash
+ls -la data/
+mkdir -p data/notes data/todos data/calendar
+```
+
+### Why are my privacy tokens inconsistent?
+Use a consistent session ID across operations:
+```python
+session_id = "user-123"
+result1 = kb.process_stream_of_consciousness("Meeting with John", session_id=session_id)
+result2 = kb.process_stream_of_consciousness("Email from John", session_id=session_id)
+```
+
+### Why am I seeing "Resource temporarily unavailable" errors?
+This may indicate that a circuit breaker is open. Check the circuit breaker status and consider using fallback options or waiting for recovery.
+
+## Support and Community
+
+### Where can I get help?
+- Check the documentation: [User Guide](user_guide.md), [API Reference](api.md)
+- Open issues on GitHub
+- Join the community forum at [community.knowledgebase.dev](https://community.knowledgebase.dev)
 
 ### How can I contribute to the project?
+See the [Contributing Guide](../CONTRIBUTING.md) for information on:
+- Submitting bug reports and feature requests
+- Contributing code and documentation
+- Development environment setup
 
-We welcome contributions! See our [Contributing Guide](../CONTRIBUTING.md) for details on:
-
-1. Setting up your development environment
-2. Finding issues to work on
-3. Coding standards and guidelines
-4. Pull request process
-5. Documentation guidelines
-
----
-
-Still have questions? Join our [community forum](https://forum.knowledge-base-system.com) or [contact us directly](mailto:support@knowledge-base-system.com). 
+### What's coming in future releases?
+See the [Roadmap](roadmap.md) for planned features and enhancements. 

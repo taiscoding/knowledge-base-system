@@ -4,9 +4,61 @@ Utility functions for the Knowledge Base system.
 """
 
 import uuid
+import logging
 from datetime import datetime, timezone
 from typing import Dict, List, Any, Optional
 import re
+
+# Set up logging
+logger = logging.getLogger(__name__)
+
+class KnowledgeBaseError(Exception):
+    """Base exception class for all Knowledge Base errors."""
+    def __init__(self, message="An error occurred in the knowledge base system"):
+        self.message = message
+        super().__init__(self.message)
+
+
+class ContentProcessingError(KnowledgeBaseError):
+    """Raised when there is an error processing content."""
+    def __init__(self, message="Error processing content"):
+        super().__init__(message)
+
+
+class StorageError(KnowledgeBaseError):
+    """Raised when there is an error reading or writing data."""
+    def __init__(self, message="Error accessing storage"):
+        super().__init__(message)
+
+
+class ConfigurationError(KnowledgeBaseError):
+    """Raised when there is a configuration error."""
+    def __init__(self, message="Invalid configuration"):
+        super().__init__(message)
+
+
+class PrivacyError(KnowledgeBaseError):
+    """Raised when there is an error related to privacy components."""
+    def __init__(self, message="Privacy component error"):
+        super().__init__(message)
+
+
+class ValidationError(KnowledgeBaseError):
+    """Raised when data validation fails."""
+    def __init__(self, message="Data validation failed"):
+        super().__init__(message)
+
+
+class NotFoundError(KnowledgeBaseError):
+    """Raised when a requested resource is not found."""
+    def __init__(self, message="Resource not found"):
+        super().__init__(message)
+
+
+class RecoveryError(KnowledgeBaseError):
+    """Raised when recovery from a previous error fails."""
+    def __init__(self, message="Recovery failed"):
+        super().__init__(message)
 
 
 def generate_id() -> str:
@@ -106,20 +158,36 @@ def detect_content_type(content: str) -> str:
     Returns:
         Content type string (note, todo, calendar, etc.)
     """
-    # Look for todo indicators
+    content_lower = content.lower()
+    
+    # Look for todo indicators (highest priority)
     todo_indicators = ['todo', 'task', 'action item', '[ ]', '[x]', 'remember to', 'don\'t forget']
-    if any(indicator in content.lower() for indicator in todo_indicators):
+    if any(indicator in content_lower for indicator in todo_indicators):
         return "todo"
     
     # Look for calendar indicators
-    calendar_indicators = ['meeting', 'appointment', 'event', 'call', 'schedule', 'at ']
-    if any(indicator in content.lower() for indicator in calendar_indicators):
+    # Specific patterns that strongly indicate a calendar event
+    calendar_primary_indicators = [
+        'meeting at', 'appointment at', 'event at', 'call at',
+        'scheduled for', 'on the calendar'
+    ]
+    if any(indicator in content_lower for indicator in calendar_primary_indicators):
         return "calendar"
-    
+        
     # Look for project indicators
     project_indicators = ['project', 'initiative', 'plan', 'workflow', 'milestone']
-    if any(indicator in content.lower() for indicator in project_indicators):
+    if any(indicator in content_lower for indicator in project_indicators):
         return "project"
+    
+    # Secondary calendar indicators (only if not part of "notes from" or similar phrases)
+    calendar_secondary = ['meeting', 'appointment', 'event', 'call', 'schedule']
+    notes_context = ['notes from', 'summary of', 'minutes from', 'about the', 'regarding the']
+    
+    # Check if any calendar word appears WITHOUT the context words before it
+    if any(cal_word in content_lower for cal_word in calendar_secondary):
+        # Make sure it's not just notes ABOUT a meeting 
+        if not any(context in content_lower for context in notes_context):
+            return "calendar"
     
     # Default to note
     return "note"

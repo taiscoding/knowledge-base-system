@@ -1,324 +1,200 @@
-# Troubleshooting Guide
+# Knowledge Base System: Troubleshooting Guide
 
-This document helps you diagnose and fix common issues with the Knowledge Base & Token Intelligence System.
+This document provides guidance for troubleshooting common issues in the Knowledge Base system.
 
-## Installation Issues
+## Error Handling System
 
-### ImportError: No module named 'knowledge_base'
+The Knowledge Base system implements a comprehensive error handling system with a hierarchy of exception types to help diagnose and fix issues.
 
-**Problem**: The system is not installed correctly or not in your Python path.
+### Exception Hierarchy
 
-**Solutions**:
-1. Verify the installation:
-   ```bash
-   pip list | grep knowledge-base-system
-   ```
+The system uses the following exception types, all derived from the base `KnowledgeBaseError`:
 
-2. If not installed, install or reinstall:
-   ```bash
-   pip install knowledge-base-system
-   ```
+| Exception Type | Description | Common Causes |
+|----------------|-------------|---------------|
+| `ConfigurationError` | Issues with configuration loading or validation | Missing config files, invalid YAML format, missing required settings |
+| `StorageError` | Problems with file I/O and storage operations | Disk full, permission issues, corrupted files |
+| `ContentProcessingError` | Failures in content extraction or processing | Invalid regex patterns, unexpected input format |
+| `PrivacyError` | Issues with privacy-preserving operations | Token generation failures, session issues |
+| `ValidationError` | Data validation failures | Invalid data format, schema violations |
+| `NotFoundError` | Requested resources not found | Missing files, invalid paths |
+| `RecoveryError` | Failed recovery attempts | Unable to recover from previous errors |
 
-3. If installing from source, ensure you're in the correct directory:
-   ```bash
-   cd knowledge-base-system
-   pip install -e .
-   ```
+### Logging Levels
 
-### ModuleNotFoundError: No module named 'yaml'
+The system uses different logging levels to provide details about operations:
 
-**Problem**: Missing dependencies.
+- `ERROR` - Critical issues that need immediate attention
+- `WARNING` - Issues that don't cause failures but should be addressed
+- `INFO` - Normal operation information
+- `DEBUG` - Detailed information for troubleshooting
 
-**Solution**:
+### Checking Logs
+
+Log files are stored in the `logs` directory by default. To check logs:
+
 ```bash
-pip install pyyaml
+# View recent log entries
+tail -n 100 logs/knowledge_base.log
+
+# Search for errors
+grep "ERROR" logs/knowledge_base.log
+
+# Search for a specific error type
+grep "ConfigurationError" logs/knowledge_base.log
 ```
 
-## Configuration Issues
+## Circuit Breaker Status
 
-### FileNotFoundError: config/ai_instructions.yaml
+The system implements the Circuit Breaker pattern for fault tolerance in critical components. If you're experiencing issues, check the circuit breaker status:
 
-**Problem**: Configuration files are not in the expected location.
+### API Endpoint
 
-**Solutions**:
-1. Create the config directory and files:
+```bash
+# Check circuit breaker status via API
+curl http://localhost:8000/api/v1/system/circuit-breakers
+```
+
+### Log Inspection
+
+Look for circuit breaker state changes in logs:
+
+```bash
+grep "Circuit .* state changed" logs/knowledge_base.log
+```
+
+### Circuit Breaker States
+
+- `CLOSED` - Normal operation, all requests passing through
+- `OPEN` - Failure threshold reached, requests short-circuited to fallbacks
+- `HALF_OPEN` - Testing recovery, limited requests passing through
+
+### Resetting Circuit Breakers
+
+If a circuit is stuck in the OPEN state and you want to force it to reset:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/system/circuit-breakers/reset
+```
+
+## Common Issues and Solutions
+
+### 1. Configuration Issues
+
+**Symptoms:**
+- `ConfigurationError` exceptions
+- Application fails to start
+- Features using specific configurations don't work
+
+**Solutions:**
+- Check that config files exist in the `config/` directory
+- Validate YAML syntax in config files
+- Ensure required settings are present
+- Check environment variables that might override configurations
+
+### 2. Storage Issues
+
+**Symptoms:**
+- `StorageError` exceptions
+- Files not saved or corrupted
+- Search functionality not returning results
+
+**Solutions:**
+- Verify write permissions on data directories
+- Check disk space
+- Ensure file paths don't contain invalid characters
+- Verify no other processes are locking files
+
+### 3. Privacy Issues
+
+**Symptoms:**
+- `PrivacyError` exceptions
+- Content not properly anonymized
+- Tokens not being reconstructed correctly
+
+**Solutions:**
+- Check privacy session existence and validity
+- Verify token mappings in the session
+- Look for circuit breaker issues in privacy components
+- Check token intelligence service connectivity
+
+### 4. Content Processing Issues
+
+**Symptoms:**
+- `ContentProcessingError` exceptions
+- Missing todos, events, or tags in results
+- Incorrect categorization of content
+
+**Solutions:**
+- Review the input format
+- Check regex patterns in extraction methods
+- Ensure content types are properly configured
+- Verify necessary dependencies are available
+
+## Recovery Mechanisms
+
+### Fallback Behaviors
+
+The system implements various fallback behaviors to maintain operation during failures:
+
+1. **Privacy Engine Fallbacks**:
+   - Minimal privacy processing when full processing fails
+   - Reuse of existing tokens when intelligence services are unavailable
+   - Preservation of original text when reconstruction fails
+
+2. **Content Processing Fallbacks**:
+   - Default values for tag extraction failures
+   - Safe title generation when parsing fails
+   - Conservative behavior with incomplete data
+
+3. **Storage Fallbacks**:
+   - In-memory operation when persistence fails
+   - Automatic retry logic for transient errors
+
+### Manual Recovery
+
+For serious issues requiring manual recovery:
+
+1. **Session Recovery**:
    ```bash
-   mkdir -p config
-   touch config/ai_instructions.yaml
-   touch config/conventions.yaml
+   # Re-initialize privacy session
+   curl -X POST http://localhost:8000/api/v1/privacy/reset-session
    ```
 
-2. Or specify an alternate configuration path:
-   ```python
-   from knowledge_base import KnowledgeBaseManager
-   kb = KnowledgeBaseManager(base_path="/path/to/custom/config")
-   ```
-
-### Configuration values not being applied
-
-**Problem**: Environment variables or configuration changes are not taking effect.
-
-**Solutions**:
-1. Verify environment variables are set:
+2. **Cache Clearing**:
    ```bash
-   echo $KB_LOG_LEVEL
+   # Clear all caches
+   curl -X POST http://localhost:8000/api/v1/system/clear-caches
    ```
 
-2. Restart your Python environment after changing configurations.
-
-3. Check that you're updating the correct files:
+3. **Index Rebuilding**:
    ```bash
-   ls -la config/
-   ```
-
-## Data Storage Issues
-
-### Permission denied when saving content
-
-**Problem**: The application doesn't have write permissions for the data directory.
-
-**Solutions**:
-1. Check permissions on the data directory:
-   ```bash
-   ls -la data/
-   ```
-
-2. Change permissions if needed:
-   ```bash
-   chmod -R 755 data/
-   ```
-
-3. Specify a different data path:
-   ```bash
-   export KB_DATA_PATH=/path/to/writable/directory
-   ```
-
-### Content not being saved
-
-**Problem**: Content is processed but not appearing in the data directory.
-
-**Solutions**:
-1. Check the return value from `process_stream_of_consciousness()` for errors.
-
-2. Verify the data directory exists:
-   ```bash
-   mkdir -p data/notes data/todos data/calendar data/journal
-   ```
-
-3. Enable debug logging to see where files are being saved:
-   ```python
-   import logging
-   logging.basicConfig(level=logging.DEBUG)
-   ```
-
-## Token Intelligence Issues
-
-### No intelligence results returned
-
-**Problem**: The token intelligence engine is not returning any results.
-
-**Solutions**:
-1. Ensure your text contains properly formatted tokens:
-   ```
-   [PERSON_001], [PROJECT_002], etc.
-   ```
-
-2. Check that you're providing sufficient context:
-   ```python
-   request = TokenIntelligenceRequest(
-       privacy_text="Meeting about [PROJECT_001]",
-       preserved_context=["quarterly", "report", "deadline"],  # Add relevant context
-       session_id="session-123"
-   )
-   ```
-
-3. Use the same session ID for related operations to build up intelligence.
-
-### Low confidence scores in intelligence results
-
-**Problem**: Intelligence results have low confidence scores.
-
-**Solutions**:
-1. Provide more context in the `preserved_context` field.
-
-2. Use consistent session IDs for related content.
-
-3. Include entity relationships:
-   ```python
-   request = TokenIntelligenceRequest(
-       privacy_text="Meeting with [PERSON_001] about [PROJECT_002]",
-       preserved_context=["meeting", "project"],
-       entity_relationships={
-           "[PERSON_001]": {"type": "person", "linked_entities": ["[PROJECT_002]"]},
-           "[PROJECT_002]": {"type": "project", "belongs_to": "[PERSON_001]"}
-       },
-       session_id="session-123"
-   )
-   ```
-
-## Privacy Integration Issues
-
-### Privacy layer integration errors
-
-**Problem**: Issues with the Sankofa privacy integration.
-
-**Solutions**:
-1. Verify the Sankofa configuration:
-   ```bash
-   cat config/sankofa_integration.yaml
-   ```
-
-2. Check that the privacy configuration is correctly formatted YAML.
-
-3. Manually validate that tokens follow the correct format.
-
-### Bundle import failures
-
-**Problem**: Unable to import privacy bundles.
-
-**Solutions**:
-1. Verify the bundle file exists and is readable:
-   ```bash
-   ls -la path/to/bundle.json
-   ```
-
-2. Check that the bundle is valid JSON:
-   ```bash
-   python -m json.tool path/to/bundle.json
-   ```
-
-3. Enable debug logging to see detailed import errors:
-   ```python
-   import logging
-   logging.basicConfig(level=logging.DEBUG)
-   ```
-
-## Search Issues
-
-### No search results returned
-
-**Problem**: Searching returns no results even when content exists.
-
-**Solutions**:
-1. Try a more general search term.
-
-2. Check that you're searching in the correct content type:
-   ```python
-   # Search all content types
-   kb.search_content("meeting")
-   
-   # Search specific content type
-   kb.search_content("meeting", content_type="calendar")
-   ```
-
-3. Verify content exists in the data directory:
-   ```bash
-   find data/ -type f -name "*.json" -o -name "*.md" | wc -l
-   ```
-
-### Search returning too many results
-
-**Problem**: Search returns too many unrelated items.
-
-**Solution**:
-1. Make your search more specific:
-   ```python
-   # Instead of
-   kb.search_content("meeting")
-   
-   # Try
-   kb.search_content("quarterly meeting budget")
-   ```
-
-2. Specify the content type:
-   ```python
-   kb.search_content("meeting", content_type="todos")
-   ```
-
-## CLI Issues
-
-### Command not found: kb-cli
-
-**Problem**: The CLI command is not found after installation.
-
-**Solutions**:
-1. Check that the package is installed correctly:
-   ```bash
-   pip show knowledge-base-system
-   ```
-
-2. Verify the binary is in your PATH:
-   ```bash
-   which kb-cli
-   ```
-
-3. Reinstall the package:
-   ```bash
-   pip install -e .
-   ```
-
-### CLI commands failing
-
-**Problem**: CLI commands return errors.
-
-**Solutions**:
-1. Run with the `--debug` flag for more information:
-   ```bash
-   kb-cli --debug search "term"
-   ```
-
-2. Check that file paths exist and are accessible.
-
-3. Verify the command syntax:
-   ```bash
-   kb-cli --help
+   # Rebuild search indices
+   curl -X POST http://localhost:8000/api/v1/search/rebuild-index
    ```
 
 ## Performance Issues
 
-### Slow processing of content
+If you're experiencing performance issues:
 
-**Problem**: Content processing is taking a long time.
+1. **Check Circuit Breaker Metrics**:
+   - Are circuits frequently opening and closing?
+   - Are fallbacks being used excessively?
 
-**Solutions**:
-1. Process smaller chunks of content at once.
+2. **Monitor Cache Efficiency**:
+   - Check cache hit rates
+   - Verify TTL settings are appropriate
 
-2. Check system resources (CPU, memory) during processing.
+3. **Examine Batch Processing**:
+   - Are batch operations completing?
+   - Is parallelism configured correctly?
 
-3. Consider setting up a caching mechanism for repeat operations.
-
-### High memory usage
-
-**Problem**: The application is using too much memory.
-
-**Solution**:
-1. Process files in batches rather than all at once.
-
-2. Close file handles explicitly after use.
-
-3. Use a memory profiler to identify memory leaks:
-   ```bash
-   pip install memory_profiler
-   python -m memory_profiler your_script.py
-   ```
+For more help with performance issues, refer to [performance_optimization.md](./performance_optimization.md).
 
 ## Getting More Help
 
-If you've tried the troubleshooting steps above and still have issues:
+If you're unable to resolve an issue using this guide, you can:
 
-1. **Check the Documentation**: Review the [User Guide](user_guide.md) and [API Reference](api.md)
-
-2. **Search Existing Issues**: Check if your issue has already been reported on the project's GitHub repository
-
-3. **Ask the Community**: Post on the community forum or discussion channels
-
-4. **File an Issue**: If you've found a bug, file an issue with:
-   - A clear description of the problem
-   - Steps to reproduce
-   - Expected vs. actual behavior
-   - System information (OS, Python version, package version)
-   - Any relevant logs or error messages
-
-5. **Contact Support**: For urgent issues, contact the support team directly
-
-Remember to include as much relevant information as possible when seeking help, including error messages, code snippets, and the steps to reproduce the issue. 
+1. Check the [FAQ](./faq.md) for common questions
+2. Open an issue in the project repository
+3. Contact the development team via the support channels listed in the [README](../README.md) 

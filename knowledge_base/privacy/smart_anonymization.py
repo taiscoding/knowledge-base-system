@@ -10,6 +10,7 @@ import json
 import uuid
 import hashlib
 import logging
+import time
 from typing import Dict, List, Any, Tuple, Optional
 from dataclasses import dataclass
 from datetime import datetime
@@ -17,6 +18,7 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from knowledge_base.privacy.token_intelligence_bridge import TokenIntelligenceBridge
+from knowledge_base.privacy.circuit_breaker import CircuitBreaker, with_circuit_breaker
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +58,26 @@ class PrivacyEngine:
         
         # Initialize token intelligence bridge
         self.token_intelligence_bridge = TokenIntelligenceBridge()
+        
+        # Set up circuit breakers for critical operations
+        circuit_breaker_config = self.config.get("circuit_breaker", {})
+        self._deidentify_circuit = CircuitBreaker(
+            name="privacy_deidentify",
+            failure_threshold=circuit_breaker_config.get("failure_threshold", 5),
+            recovery_timeout=circuit_breaker_config.get("recovery_timeout", 30)
+        )
+        
+        self._reconstruct_circuit = CircuitBreaker(
+            name="privacy_reconstruct", 
+            failure_threshold=circuit_breaker_config.get("failure_threshold", 5),
+            recovery_timeout=circuit_breaker_config.get("recovery_timeout", 30)
+        )
+        
+        self._batch_circuit = CircuitBreaker(
+            name="privacy_batch",
+            failure_threshold=circuit_breaker_config.get("failure_threshold", 5),
+            recovery_timeout=circuit_breaker_config.get("recovery_timeout", 30)
+        )
     
     def _initialize_detection_patterns(self):
         """Initialize patterns for detecting sensitive information."""
@@ -132,6 +154,24 @@ class PrivacyEngine:
     def deidentify(self, text: str, session_id: str) -> DeidentificationResult:
         """
         De-identify text by replacing sensitive information with tokens.
+        
+        Args:
+            text: Text to de-identify
+            session_id: Session ID for token consistency
+            
+        Returns:
+            DeidentificationResult with tokenized text and metadata
+        """
+        return self._deidentify_circuit.execute(
+            self._deidentify_impl,
+            fallback=self._deidentify_fallback,
+            text=text,
+            session_id=session_id
+        )
+    
+    def _deidentify_impl(self, text: str, session_id: str) -> DeidentificationResult:
+        """
+        Actual implementation of deidentify.
         
         Args:
             text: Text to de-identify
@@ -272,6 +312,42 @@ class PrivacyEngine:
             entity_relationships=entity_relationships
         )
     
+    def _deidentify_fallback(self, text: str, session_id: str) -> DeidentificationResult:
+        """
+        Fallback implementation for deidentify when circuit is open.
+        
+        Args:
+            text: Text to de-identify
+            session_id: Session ID for token consistency
+            
+        Returns:
+            Minimal DeidentificationResult with basic protection
+        """
+        logger.warning(f"Using fallback privacy implementation for session {session_id}")
+        
+        # Ensure a valid session exists
+        if session_id not in self.sessions:
+            session_id = self.create_session("minimal")
+            
+        # Get the minimal existing mappings
+        session = self.sessions[session_id]
+        token_mappings = session.get("token_mappings", {})
+        
+        # Apply only existing token mappings if any
+        processed_text = text
+        for token, original in token_mappings.items():
+            if original in processed_text:
+                processed_text = processed_text.replace(original, f"[{token}]")
+        
+        # Return minimal result
+        return DeidentificationResult(
+            text=processed_text,
+            session_id=session_id,
+            privacy_level="minimal",
+            token_map=token_mappings,
+            entity_relationships=session.get("entity_relationships", {})
+        )
+    
     def deidentify_batch(self, texts: List[str], session_id: str = None, 
                          max_workers: int = None) -> List[DeidentificationResult]:
         """
@@ -281,6 +357,27 @@ class PrivacyEngine:
             texts: List of texts to deidentify
             session_id: Privacy session ID (created if None)
             max_workers: Maximum number of worker threads (default: None, uses system default)
+            
+        Returns:
+            List of DeidentificationResult objects
+        """
+        return self._batch_circuit.execute(
+            self._deidentify_batch_impl,
+            fallback=self._deidentify_batch_fallback,
+            texts=texts,
+            session_id=session_id,
+            max_workers=max_workers
+        )
+    
+    def _deidentify_batch_impl(self, texts: List[str], session_id: str = None, 
+                            max_workers: int = None) -> List[DeidentificationResult]:
+        """
+        Actual implementation of batch deidentification.
+        
+        Args:
+            texts: List of texts to deidentify
+            session_id: Privacy session ID (created if None)
+            max_workers: Maximum number of worker threads
             
         Returns:
             List of DeidentificationResult objects
@@ -297,7 +394,7 @@ class PrivacyEngine:
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             # Submit all deidentification tasks
             future_to_text = {
-                executor.submit(self.deidentify, text, session_id): text 
+                executor.submit(self._deidentify_impl, text, session_id): text 
                 for text in texts
             }
             
@@ -318,9 +415,61 @@ class PrivacyEngine:
         
         return results
     
+    def _deidentify_batch_fallback(self, texts: List[str], session_id: str = None,
+                               max_workers: int = None) -> List[DeidentificationResult]:
+        """
+        Fallback implementation for batch deidentification.
+        
+        Args:
+            texts: List of texts to deidentify
+            session_id: Privacy session ID (created if None)
+            max_workers: Maximum number of worker threads
+            
+        Returns:
+            List of minimal DeidentificationResult objects
+        """
+        logger.warning(f"Using fallback for batch processing with session {session_id}")
+        
+        # Ensure a valid session exists
+        if session_id is None or session_id not in self.sessions:
+            session_id = self.create_session("minimal")
+            
+        # Process texts sequentially with the fallback method
+        results = []
+        for text in texts:
+            try:
+                result = self._deidentify_fallback(text, session_id)
+                results.append(result)
+            except Exception as e:
+                logger.error(f"Error in batch fallback processing: {e}")
+                # Return text as is with empty mappings
+                results.append(DeidentificationResult(
+                    text, session_id, "minimal", {}, {}
+                ))
+                
+        return results
+    
     def reconstruct(self, text: str, session_id: str) -> str:
         """
         Reconstruct original text by replacing tokens with original values.
+        
+        Args:
+            text: Text with privacy tokens
+            session_id: Session ID for token mapping
+            
+        Returns:
+            Reconstructed text with original values
+        """
+        return self._reconstruct_circuit.execute(
+            self._reconstruct_impl,
+            fallback=self._reconstruct_fallback,
+            text=text,
+            session_id=session_id
+        )
+    
+    def _reconstruct_impl(self, text: str, session_id: str) -> str:
+        """
+        Actual implementation of text reconstruction.
         
         Args:
             text: Text with privacy tokens
@@ -346,6 +495,36 @@ class PrivacyEngine:
             
         return reconstructed
     
+    def _reconstruct_fallback(self, text: str, session_id: str) -> str:
+        """
+        Fallback implementation for reconstruct.
+        
+        Args:
+            text: Text with privacy tokens
+            session_id: Session ID for token mapping
+            
+        Returns:
+            Best effort reconstructed text
+        """
+        logger.warning(f"Using fallback reconstruction for session {session_id}")
+        
+        # If session doesn't exist, return text as is
+        if session_id not in self.sessions:
+            return text
+            
+        # Try a best effort with the most common tokens
+        session = self.sessions[session_id]
+        token_mappings = session["token_mappings"]
+        
+        reconstructed = text
+        
+        # Only process with bracket format to avoid over-replacing
+        for token, original in token_mappings.items():
+            if f"[{token}]" in text:
+                reconstructed = reconstructed.replace(f"[{token}]", original)
+            
+        return reconstructed
+    
     def enhance_for_ai(self, text: str, session_id: str) -> str:
         """
         Enhance de-identified text with context for AI processing.
@@ -366,14 +545,17 @@ class PrivacyEngine:
         entity_relationships = session.get("entity_relationships", {})
         
         # Use token intelligence bridge for enhancement
-        enhanced_text = self.token_intelligence_bridge.enhance_privacy_text(
-            text,
-            session_id,
-            preserved_context,
-            entity_relationships
-        )
-        
-        return enhanced_text
+        try:
+            enhanced_text = self.token_intelligence_bridge.enhance_privacy_text(
+                text,
+                session_id,
+                preserved_context,
+                entity_relationships
+            )
+            return enhanced_text
+        except Exception as e:
+            logger.error(f"Error enhancing text: {e}")
+            return text  # Return original text if enhancement fails
     
     def _process_patterns(
         self, 

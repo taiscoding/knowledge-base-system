@@ -4,7 +4,264 @@
 
 ## Overview
 
-The Knowledge Base System is built on a modular, component-based architecture designed for privacy, extensibility, and performance. This document outlines the high-level architecture, key components, and data flows.
+The Knowledge Base System is designed with a modular architecture that separates concerns and enables flexibility. This document describes the high-level architecture, components, data flow, and design patterns used throughout the system.
+
+## System Components
+
+![System Components](../assets/architecture-diagram.png)
+
+### Core Components
+
+1. **Knowledge Base Manager** (`knowledge_base/manager.py`)
+   - Central orchestrator for the system
+   - Manages content processing, storage, and retrieval
+   - Coordinates between privacy, storage, and intelligence components
+
+2. **Privacy Engine** (`knowledge_base/privacy/`)
+   - Handles sensitive information tokenization and detokenization
+   - Manages privacy sessions and token mappings
+   - Implements smart anonymization for contextual privacy preservation
+   - Features circuit breaker pattern for fault tolerance
+
+3. **Storage System** (`knowledge_base/storage/`)
+   - File-based storage for different content types
+   - Handles data persistence and retrieval
+   - Implements versioning and backup mechanisms
+
+4. **Search Engine** (`search/search_index.py`)
+   - Provides full-text search capabilities
+   - Creates and maintains search indices
+   - Supports tags, content types, and relevance filtering
+
+5. **Token Intelligence** (`token_intelligence/`)
+   - Analyzes and processes privacy tokens
+   - Generates intelligence insights from relationships
+   - Provides contextual token understanding
+
+### Supporting Components
+
+1. **CLI Interface** (`knowledge_base/cli.py`)
+   - Command-line interface for system interaction
+   - Provides commands for content management and search
+
+2. **API Server** (`scripts/api_server.py`)
+   - REST API for external integrations
+   - Exposes system functionality via HTTP endpoints
+
+3. **Utilities** (`knowledge_base/utils/`)
+   - Configuration management
+   - Helper functions
+   - Logging and error handling
+
+## Data Flow
+
+1. **Content Ingestion Flow**
+   ```
+   Raw Content → KnowledgeBaseManager → Privacy Engine → Content Processing → Storage System
+                                                      ↓
+                                                Search Index
+   ```
+
+2. **Content Retrieval Flow**
+   ```
+   Query → KnowledgeBaseManager → Storage System → Privacy Engine → User Display
+   ```
+
+3. **Search Flow**
+   ```
+   Search Query → KnowledgeBaseManager → Search Engine → Storage System → Privacy Engine → Results
+   ```
+
+4. **Token Intelligence Flow**
+   ```
+   Content → Privacy Engine → Token Intelligence Engine → Token Analysis → Intelligence Storage
+                                                       ↓
+                                                 Knowledge Graph
+   ```
+
+## Error Handling & Fault Tolerance
+
+### Exception Hierarchy
+
+The system implements a comprehensive exception hierarchy to handle various error scenarios:
+
+```
+KnowledgeBaseError
+├── ConfigurationError
+├── StorageError
+├── ContentProcessingError
+├── PrivacyError
+├── ValidationError
+├── NotFoundError
+└── RecoveryError
+```
+
+Each exception type is specialized for different components and error scenarios, providing consistent error handling across the system.
+
+### Error Handling Strategies
+
+1. **Graceful Degradation**
+   - System continues to function with reduced capabilities when components fail
+   - Privacy operations fall back to basic processing when advanced features fail
+   - Storage operations can use in-memory fallbacks when persistence fails
+
+2. **Comprehensive Logging**
+   - Detailed error logging with context and stack traces
+   - Different log levels based on error severity
+   - Centralized log collection for system monitoring
+
+3. **Recovery Mechanisms**
+   - Automatic retry logic for transient errors
+   - Session restoration capabilities
+   - Cache rebuilding mechanisms
+
+### Circuit Breaker Pattern
+
+The system implements the Circuit Breaker pattern to prevent cascading failures and provide fault tolerance:
+
+![Circuit Breaker States](../assets/circuit-breaker-diagram.png)
+
+#### Circuit Breaker States
+
+1. **CLOSED** - Normal operation
+   - All requests flow through normally
+   - Failures are counted against threshold
+
+2. **OPEN** - Failure mode
+   - Requests are short-circuited immediately
+   - Prevents overwhelming failing services
+   - Remains open for configured timeout period
+
+3. **HALF_OPEN** - Recovery testing
+   - Limited test traffic is allowed through
+   - Success transitions back to CLOSED
+   - Failure returns to OPEN with reset timeout
+
+#### Implementation
+
+The circuit breaker is implemented in `knowledge_base/privacy/circuit_breaker.py` with the following features:
+
+- Thread-safe state management
+- Configurable failure thresholds and timeouts
+- Metrics collection for monitoring
+- Protected integration with privacy components
+- Fallback mechanism configuration
+
+#### Integration
+
+Circuit breakers are integrated with critical system components:
+
+1. **Privacy Engine**
+   - Protects token generation and resolution operations
+   - Falls back to basic privacy preservation when open
+
+2. **Token Intelligence**
+   - Monitors API availability and response times
+   - Falls back to cached token information when unavailable
+
+3. **External Services**
+   - Prevents overwhelming external dependencies
+   - Implements timeout and retry logic
+
+## Design Patterns
+
+### Singleton Pattern
+Used for configuration managers and session managers to ensure single instances across the system.
+
+### Factory Pattern
+Used for creating different content types and storage backends based on configuration.
+
+### Strategy Pattern
+Used for implementing different privacy levels and content processing strategies.
+
+### Observer Pattern
+Used for notifying system components about changes in content and configuration.
+
+### Decorator Pattern
+Used for adding functionality to content processors and storage backends.
+
+### Circuit Breaker Pattern
+Used for fault tolerance in critical components and external service integrations.
+
+## Configuration Management
+
+Configuration is managed through:
+- YAML files in the `config/` directory
+- Environment variables
+- Command-line arguments
+
+Configuration precedence (highest to lowest):
+1. Command-line arguments
+2. Environment variables
+3. Configuration files
+4. Default values
+
+## Security Considerations
+
+### Privacy Protection
+- Sensitive information is tokenized
+- Token mappings are session-specific
+- Privacy levels can be configured
+- Smart anonymization for contextual understanding
+
+### Authentication & Authorization
+- API endpoints require authentication
+- Role-based access control for administrative functions
+- Token-based authentication for sessions
+
+### Data Security
+- Content encryption at rest (optional)
+- Secure token storage
+- Data minimization practices
+
+## Scalability Considerations
+
+### Current Limitations
+- File-based storage limits large data volumes
+- Single-instance design for simplicity
+
+### Future Expansion
+- Database storage backend option
+- Distributed processing capabilities
+- Horizontal scaling of components
+
+## Testing Strategy
+
+The system implements a multi-layered testing approach:
+
+1. **Unit Tests**
+   - Component-level tests for individual functions
+   - High coverage of core functionality
+
+2. **Integration Tests**
+   - Tests for component interactions
+   - Privacy and storage integration tests
+
+3. **End-to-End Tests**
+   - Full system flow testing
+   - CLI and API endpoint testing
+
+4. **Performance Tests**
+   - Benchmarks for critical operations
+   - Stress testing for failure conditions
+
+## Future Architecture Enhancements
+
+1. **Distributed Storage**
+   - Support for cloud storage backends
+   - Distributed file systems
+
+2. **Event-Driven Architecture**
+   - Message queue for asynchronous processing
+   - Event subscription for extensions
+
+3. **Plugin System**
+   - Extensibility for custom content types
+   - Integration points for third-party extensions
+
+4. **Advanced Caching**
+   - Multi-level caching strategy
+   - Distributed cache support
 
 ## System Components
 
@@ -423,3 +680,115 @@ python3 api_server.py
 - **Configuration**: YAML
 - **Testing**: pytest ecosystem (pytest, pytest-cov, pytest-mock, pytest-benchmark)
 - **Packaging**: Standard Python packaging 
+
+## Error Handling and Fault Tolerance
+
+### Exception Hierarchy
+
+The system implements a comprehensive exception hierarchy to handle errors gracefully:
+
+- `KnowledgeBaseError`: Base exception for all system errors
+  - `ContentProcessingError`: For content extraction and processing failures
+  - `StorageError`: For file I/O and storage-related issues
+  - `ConfigurationError`: For configuration loading and validation issues
+  - `PrivacyError`: For privacy-related operations failures
+  - `ValidationError`: For data validation failures
+  - `NotFoundError`: For missing resource errors
+  - `RecoveryError`: For failed recovery attempts
+
+### Circuit Breaker Pattern
+
+Critical operations, particularly in the privacy components, are protected by the Circuit Breaker pattern to prevent cascading failures:
+
+1. **State Machine**: 
+   - `CLOSED`: Normal operation - requests pass through
+   - `OPEN`: Failing - requests are short-circuited to fallbacks
+   - `HALF_OPEN`: Testing recovery - limited requests allowed through
+
+2. **Protection Mechanism**:
+   - Monitors failure rates with configurable thresholds
+   - Automatically trips from CLOSED to OPEN after reaching failure threshold
+   - Implements recovery timeout before attempting to recover
+   - Metrics tracking for monitoring and diagnostics
+
+3. **Protected Operations**:
+   - Privacy de-identification
+   - Token reconstruction
+   - Batch processing
+   - External service interactions
+
+### Fallback Mechanisms
+
+Each critical component provides fallback behaviors for graceful degradation:
+
+1. **Privacy Engine Fallbacks**:
+   - Minimal privacy processing when full processing fails
+   - Reuse of existing tokens when intelligence services are unavailable
+   - Preservation of original text when reconstruction fails
+
+2. **Content Processing Fallbacks**:
+   - Default values for tag extraction failures
+   - Safe title generation when parsing fails
+   - Conservative behavior with incomplete data
+
+3. **Storage Fallbacks**:
+   - In-memory operation when persistence fails
+   - Automatic retry logic for transient errors
+   - Safe defaults when configuration is missing
+
+## Data Flow
+
+### Content Processing Flow
+
+1. User submits stream-of-consciousness input
+2. Content is optionally anonymized by privacy engine
+3. Tags, todos, and events are extracted
+4. Items are categorized and saved
+5. Responses are generated with follow-up suggestions
+
+### Privacy Flow
+
+1. Text is tokenized using pattern matching
+2. Sensitive information is replaced with tokens
+3. Tokens maintain relationships between entities
+4. Processing occurs on tokenized text
+5. Results are de-tokenized before returning to user
+
+## Integration Points
+
+### External Systems
+
+The Knowledge Base integrates with several external systems:
+
+- Sankofa Privacy Layer
+- Token Intelligence API
+- Storage backends
+
+### API Endpoints
+
+The system exposes several API endpoints:
+
+- Content submission and processing
+- Search functionality
+- Privacy-preserving operations
+
+## Performance Considerations
+
+### Optimizations
+
+Several optimizations improve system performance:
+
+- Client-side caching for token intelligence
+- Batch processing for multiple items
+- Pre-compiled regex patterns
+- Circuit breaker pattern to fail fast
+- Parallel processing where appropriate
+
+### Monitoring
+
+The system includes monitoring capabilities:
+
+- Performance metrics collection
+- Error rate tracking
+- Circuit breaker state monitoring
+- Health checks 

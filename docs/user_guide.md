@@ -184,3 +184,460 @@ If you have questions or need assistance:
 - Join our [Community Forum](https://forum.knowledge-base-system.com)
 
 Happy organizing! 
+
+## Introduction
+
+The Knowledge Base System helps you organize and process unstructured content, extracting structured information while maintaining privacy. This guide covers both basic and advanced usage.
+
+## Quick Start
+
+### Installation
+
+```bash
+# Install the package
+pip install knowledge-base-system
+
+# Or install from source
+git clone https://github.com/yourorg/knowledge-base-system.git
+cd knowledge-base-system
+pip install -e .
+```
+
+### Basic Usage
+
+```python
+from knowledge_base import KnowledgeBaseManager
+
+# Initialize the manager
+kb = KnowledgeBaseManager()
+
+# Process stream-of-consciousness content
+result = kb.process_stream_of_consciousness(
+    "Need to call John about Project X tomorrow at 2pm. Also make notes about the Q2 budget review."
+)
+
+# Search content
+search_results = kb.search_content("budget")
+```
+
+## Core Functionality
+
+### Processing Content
+
+The system can process raw textual content and extract structured information:
+
+```python
+# Process with default privacy settings
+result = kb.process_stream_of_consciousness(
+    "Reminder to email sarah@example.com about the client meeting next Monday."
+)
+
+# Process with enhanced privacy
+result = kb.process_stream_of_consciousness(
+    "Reminder to email sarah@example.com about the client meeting next Monday.",
+    privacy_level="enhanced"
+)
+
+# Process with a session ID for token consistency
+result = kb.process_stream_of_consciousness(
+    "Reminder to email sarah@example.com about the client meeting next Monday.",
+    session_id="user-123-session"
+)
+```
+
+### Content Types
+
+The system extracts and organizes content into different types:
+
+1. **Notes**: General text content
+2. **Todos**: Action items with optional due dates
+3. **Calendar Events**: Events with dates, times, and attendees
+4. **Projects**: Project-related information
+5. **References**: Citations or reference material
+
+### Privacy Features
+
+The system provides privacy protection for sensitive information:
+
+```python
+# Process content with privacy protection
+result = kb.process_stream_of_consciousness(
+    "Schedule a call with John Smith (555-123-4567) to discuss Project X.",
+    privacy_level="standard"
+)
+
+# The processed content will contain tokens instead of sensitive information
+# "Schedule a call with [PERSON_001] ([PHONE_001]) to discuss [PROJECT_001]."
+```
+
+#### Privacy Levels
+
+- **Minimal**: Basic entity detection (names, emails)
+- **Standard**: Comprehensive entity detection (default)
+- **Enhanced**: Maximum privacy with additional context analysis
+
+## Advanced Usage
+
+### Custom Configuration
+
+```python
+from knowledge_base import KnowledgeBaseManager
+
+# Initialize with custom configuration paths
+kb = KnowledgeBaseManager(
+    config_path="/path/to/config/",
+    base_path="/path/to/data/"
+)
+
+# Or set configuration via environment variables
+# export KB_CONFIG_PATH="/path/to/config/"
+# export KB_DATA_PATH="/path/to/data/"
+```
+
+### Working with Privacy Sessions
+
+To ensure consistent tokenization across multiple operations, use session IDs:
+
+```python
+# First operation creates tokens
+result1 = kb.process_stream_of_consciousness(
+    "Meeting with John Smith about Project X.",
+    session_id="user-123"
+)
+
+# Later operations use the same tokens for the same entities
+result2 = kb.process_stream_of_consciousness(
+    "Send report to John Smith regarding Project X progress.",
+    session_id="user-123"
+)
+```
+
+### Exporting and Importing Content
+
+```python
+# Export content to a portable format
+exported_content = kb.export_content(content_types=["notes", "todos"])
+
+# Save to a file
+import json
+with open("exported_kb.json", "w") as f:
+    json.dump(exported_content, f)
+
+# Import content from a file
+with open("exported_kb.json", "r") as f:
+    imported_content = json.load(f)
+    
+kb.import_content(imported_content)
+```
+
+## Command Line Interface
+
+The system provides a command-line interface for common operations:
+
+```bash
+# Process a file
+kb-cli process input.txt
+
+# Search content
+kb-cli search "budget meeting"
+
+# Export content
+kb-cli export --output exported_kb.json
+
+# Import content
+kb-cli import exported_kb.json
+```
+
+## API Server
+
+An HTTP API server is available for integrating with other applications:
+
+```bash
+# Start the API server
+kb-api-server
+
+# Server runs on http://localhost:5000 by default
+```
+
+### API Usage Example
+
+```python
+import requests
+import json
+
+# Process content via API
+response = requests.post(
+    "http://localhost:5000/api/v1/content/process",
+    headers={"Content-Type": "application/json"},
+    data=json.dumps({
+        "content": "Call John about the project tomorrow at 2pm.",
+        "session_id": "user-123",
+        "privacy_level": "standard"
+    })
+)
+
+result = response.json()
+```
+
+## Error Handling and Troubleshooting
+
+The Knowledge Base System implements a comprehensive error handling system that helps you diagnose and fix issues.
+
+### Understanding Error Types
+
+All errors in the system inherit from a base `KnowledgeBaseError` class and are categorized by type:
+
+```
+KnowledgeBaseError
+├── ConfigurationError - Issues with configuration files or settings
+├── StorageError - Problems reading/writing files or accessing storage
+├── ContentProcessingError - Failures in extracting or processing content
+├── PrivacyError - Privacy-related operations failures
+├── ValidationError - Input validation failures
+├── NotFoundError - Requested resources not found
+└── RecoveryError - Failed recovery attempts
+```
+
+### Common Errors and Solutions
+
+#### ConfigurationError
+
+This occurs when configuration files can't be loaded or contain invalid settings.
+
+**Solution:**
+```python
+# Verify config path
+import os
+print(os.path.exists("/path/to/config/ai_instructions.yaml"))
+
+# Use valid configuration path
+kb = KnowledgeBaseManager(config_path="/valid/path/to/config/")
+```
+
+#### StorageError
+
+This happens when the system can't read from or write to the data directory.
+
+**Solution:**
+```python
+# Ensure data directory exists and has correct permissions
+import os
+os.makedirs("/path/to/data", exist_ok=True)
+
+# Use a different data directory
+kb = KnowledgeBaseManager(base_path="/different/path/to/data/")
+```
+
+#### PrivacyError
+
+This occurs when privacy operations fail, such as tokenization or token resolution.
+
+**Solution:**
+```python
+# Try with a fresh session ID
+result = kb.process_stream_of_consciousness(
+    "Meeting with John about the project.",
+    session_id="new-session-id"
+)
+
+# Or use a different privacy level
+result = kb.process_stream_of_consciousness(
+    "Meeting with John about the project.",
+    privacy_level="minimal"  # Try less aggressive privacy settings
+)
+```
+
+### Handling API Errors
+
+When using the API, errors are returned with descriptive status codes and messages:
+
+```python
+import requests
+import json
+
+response = requests.post(
+    "http://localhost:5000/api/v1/content/process",
+    headers={"Content-Type": "application/json"},
+    data=json.dumps({
+        "content": "Call John tomorrow"
+    })
+)
+
+if response.status_code != 200:
+    error = response.json()
+    print(f"Error type: {error['error']['type']}")
+    print(f"Message: {error['error']['message']}")
+    # Handle specific error types
+    if error['error']['type'] == 'ValidationError':
+        # Fix validation issue
+        pass
+```
+
+### Circuit Breaker Pattern
+
+The system implements the Circuit Breaker pattern to prevent cascading failures when components experience problems.
+
+#### How Circuit Breakers Work
+
+1. **CLOSED** state: Normal operation
+2. **OPEN** state: When failures exceed threshold, requests are rejected to prevent further failures
+3. **HALF_OPEN** state: After timeout period, allows some requests to test if the system has recovered
+
+#### Circuit Breaker Status
+
+You can check the status of circuit breakers via the API:
+
+```bash
+# Check circuit breaker status
+curl http://localhost:5000/api/v1/system/circuit-breakers
+
+# Response shows state of all circuit breakers
+# {
+#   "status": "success",
+#   "circuit_breakers": {
+#     "privacy_engine": {
+#       "state": "CLOSED",
+#       "failure_count": 0,
+#       "failure_threshold": 5,
+#       ...
+#     },
+#     ...
+#   }
+# }
+```
+
+#### Handling Circuit Breaker Open Errors
+
+When a circuit breaker is OPEN, API requests will return a 429 status code:
+
+```python
+response = requests.post("http://localhost:5000/api/v1/privacy/tokenize", 
+                         json={"text": "Meeting with John"})
+
+if response.status_code == 429:
+    error = response.json()
+    if error['error']['type'] == 'CircuitBreakerOpenError':
+        print("Service temporarily unavailable due to circuit breaker")
+        # Implement retry with exponential backoff
+        # Or use fallback mechanism
+```
+
+### Using Fallback Mechanisms
+
+The system provides fallback mechanisms when components are unavailable:
+
+```python
+try:
+    # Try normal processing
+    result = kb.process_stream_of_consciousness(
+        "Meeting with John about Project X tomorrow.",
+        privacy_level="standard"
+    )
+except KnowledgeBaseError as e:
+    # Fall back to minimal processing on error
+    print(f"Using fallback due to error: {str(e)}")
+    result = kb.process_stream_of_consciousness(
+        "Meeting with John about Project X tomorrow.",
+        privacy_level="minimal"
+    )
+```
+
+### Logging for Troubleshooting
+
+Enable detailed logging to troubleshoot issues:
+
+```python
+import logging
+
+# Set logging level for the knowledge_base module
+logging.getLogger('knowledge_base').setLevel(logging.DEBUG)
+
+# Add a handler to see messages
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+logging.getLogger('knowledge_base').addHandler(handler)
+
+# Now operations will log detailed information
+kb = KnowledgeBaseManager()
+kb.process_stream_of_consciousness("Meeting with John tomorrow")
+```
+
+### Common Troubleshooting Steps
+
+1. **Check logs**: Review log files for detailed error information
+2. **Verify configurations**: Ensure configuration files exist and are valid
+3. **Check permissions**: Verify filesystem permissions for data directories
+4. **Test API connectivity**: Use health endpoints to verify services are running
+5. **Check circuit breakers**: If operations are failing, check if circuit breakers are open
+
+For more detailed troubleshooting information, refer to the [Troubleshooting Guide](./troubleshooting.md).
+
+## Best Practices
+
+### Sessions and Privacy
+
+- Use consistent session IDs for related content to maintain token consistency
+- Choose appropriate privacy levels for your needs
+- Store session IDs securely as they can be used to reconstruct sensitive information
+
+### Performance Optimization
+
+- Process content in batches when possible
+- Use appropriate privacy levels (higher levels require more processing)
+- Consider caching for frequently accessed content
+
+### Content Management
+
+- Add context or tags to improve search results
+- Use descriptive titles when manually creating content
+- Regularly export your knowledge base for backup purposes
+
+## Integration Examples
+
+### Integration with Note-Taking Apps
+
+```python
+def sync_notes_with_knowledge_base(notes):
+    kb = KnowledgeBaseManager()
+    results = []
+    
+    for note in notes:
+        try:
+            result = kb.process_stream_of_consciousness(
+                note['content'],
+                title=note['title'],
+                tags=note['tags']
+            )
+            results.append(result)
+        except Exception as e:
+            print(f"Error processing note '{note['title']}': {str(e)}")
+    
+    return results
+```
+
+### Integration with Calendar Applications
+
+```python
+def extract_events_from_knowledge_base():
+    kb = KnowledgeBaseManager()
+    events = kb.get_content_by_type("calendar")
+    
+    calendar_events = []
+    for event in events:
+        calendar_events.append({
+            'title': event['title'],
+            'start': event['datetime'],
+            'attendees': event.get('attendees', []),
+            'location': event.get('location', '')
+        })
+    
+    return calendar_events
+```
+
+## Further Reading
+
+- [API Reference](./api.md): Detailed API documentation
+- [Architecture Guide](./architecture.md): System architecture and design
+- [Configuration Guide](./configuration.md): Configuration options and settings
+- [Privacy Design](./privacy_design.md): Privacy features and implementation
+- [Troubleshooting Guide](./troubleshooting.md): Detailed troubleshooting steps 
