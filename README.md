@@ -219,3 +219,11 @@ We welcome contributions to the Knowledge Base System! See the [Contributing Gui
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Project Structure
+
+- `knowledge_base/` - Core module containing the main functionality
+- `tests/` - Comprehensive test suite for the project
+- `docs/` - User and developer documentation
+- `scripts/` - Helper scripts and utilities
+- `development/` - Development resources, planning documents, and historical records
