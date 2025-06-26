@@ -85,7 +85,6 @@ class TestPrivacyIntegration:
             token_bridge = TokenIntelligenceBridge()
             enhanced_text = token_bridge.enhance_privacy_text(
                 deidentified_result.text,
-                session_id,
                 session_manager.sessions[session_id].get("preserved_context", []),
                 deidentified_result.entity_relationships
             )

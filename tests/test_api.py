@@ -1,134 +1,237 @@
 #!/usr/bin/env python3
 """
-Tests for the token_intelligence.api module.
+Tests for the Knowledge Base API Server.
 """
 
-import unittest
+import pytest
 import json
-from flask import Flask
-from flask.testing import FlaskClient
+from fastapi.testclient import TestClient
+from unittest.mock import MagicMock, patch
 
-from token_intelligence.api import app
-from token_intelligence.core import TokenIntelligenceRequest
+# Import the app from the API server
+from scripts.api_server import app, get_kb_manager
 
 
-class TestAPIEndpoints(unittest.TestCase):
-    """Tests for the API endpoints."""
+@pytest.fixture
+def mock_kb_manager():
+    """Create a mock KnowledgeBaseManager for testing."""
+    manager = MagicMock()
     
-    def setUp(self):
-        """Set up the test environment."""
-        self.app = app.test_client()
-        self.app.testing = True
+    # Set up mock return values
+    manager.process_stream_of_consciousness.return_value = {
+        "original_content": "Test content",
+        "processed_items": [],
+        "extracted_info": {
+            "todos": [],
+            "calendar_events": [],
+            "notes": [{"title": "Test Note"}],
+            "tags": [],
+            "categories": ["general"]
+        }
+    }
     
-    def test_health_endpoint(self):
-        """Test the health check endpoint."""
-        response = self.app.get('/health')
+    manager.process_with_privacy.return_value = {
+        "original_content": "Private content",
+        "processed_items": [],
+        "extracted_info": {
+            "todos": [],
+            "calendar_events": [],
+            "notes": [{"title": "Private Note"}]
+        },
+        "privacy": {
+            "session_id": "test-session",
+            "privacy_level": "balanced",
+            "is_anonymized": True
+        }
+    }
+    
+    manager.search_content.return_value = [
+        {
+            "file": "/path/to/note.md",
+            "type": "note",
+            "content_preview": "Test content preview"
+        }
+    ]
+    
+    manager.process_and_respond.return_value = {
+        "response": {
+            "message": "I processed your input.",
+            "suggestions": []
+        }
+    }
+    
+    # Set up session manager mock
+    session_manager = MagicMock()
+    session_manager.create_session.return_value = "test-session-id"
+    session_manager.get_session.return_value = {
+        "id": "test-session-id",
+        "privacy_level": "balanced",
+        "created": "2023-01-01T00:00:00Z"
+    }
+    
+    manager.session_manager = session_manager
+    
+    return manager
+
+
+@pytest.fixture
+def client(mock_kb_manager):
+    """Create a test client with the mock KB manager."""
+    # Override the dependency to use our mock
+    app.dependency_overrides[get_kb_manager] = lambda: mock_kb_manager
+    return TestClient(app)
+
+
+class TestAPI:
+    """Test suite for the Knowledge Base API."""
+    
+    def test_root_endpoint(self, client):
+        """Test the root endpoint."""
+        response = client.get("/")
+        assert response.status_code == 200
+        data = response.json()
+        assert data["name"] == "Knowledge Base with Integrated Privacy API"
+        assert "version" in data
         
-        # Verify response code
-        self.assertEqual(response.status_code, 200)
+    def test_process_endpoint(self, client, mock_kb_manager):
+        """Test the /process endpoint."""
+        response = client.post(
+            "/process",
+            json={"content": "Test content to process"}
+        )
         
-        # Verify response content
-        data = json.loads(response.data)
-        self.assertEqual(data['status'], 'healthy')
-        self.assertIn('service', data)
-        self.assertIn('timestamp', data)
-    
-    def test_analyze_tokens_endpoint(self):
-        """Test the analyze_privacy_tokens endpoint."""
-        # Create test request data
-        request_data = {
-            'privacy_text': 'Meeting with [PERSON_001] about [PROJECT_002]',
-            'session_id': 'test-api-session',
-            'preserved_context': ['meeting', 'project'],
-            'entity_relationships': {
-                '[PERSON_001]': {'type': 'person', 'linked_entities': ['[PROJECT_002]']},
-                '[PROJECT_002]': {'type': 'project', 'belongs_to': '[PERSON_001]'}
+        # Check response
+        assert response.status_code == 200
+        data = response.json()
+        assert data["original_content"] == "Test content"
+        
+        # Verify the mock was called correctly
+        mock_kb_manager.process_stream_of_consciousness.assert_called_once_with("Test content to process")
+        
+    def test_process_private_endpoint(self, client, mock_kb_manager):
+        """Test the /process-private endpoint."""
+        response = client.post(
+            "/process-private",
+            json={
+                "content": "Private content to process",
+                "privacy_level": "strict"
             }
-        }
+        )
         
-        # Send the request
-        response = self.app.post('/analyze_privacy_tokens', 
-                                json=request_data,
-                                content_type='application/json')
+        # Check response
+        assert response.status_code == 200
+        data = response.json()
+        assert "privacy" in data
+        assert data["privacy"]["privacy_level"] == "balanced"  # From the mock return value
         
-        # Verify response code
-        self.assertEqual(response.status_code, 200)
+        # Verify the mock was called correctly
+        mock_kb_manager.process_with_privacy.assert_called_once_with(
+            "Private content to process",
+            session_id=None,
+            privacy_level="strict"
+        )
         
-        # Verify response structure
-        data = json.loads(response.data)
-        self.assertIn('intelligence', data)
-        self.assertIn('confidence', data)
-        self.assertIn('intelligence_type', data)
-        self.assertIn('source', data)
-        self.assertIn('processing_time_ms', data)
+    def test_search_endpoint(self, client, mock_kb_manager):
+        """Test the /search endpoint."""
+        response = client.post(
+            "/search",
+            json={
+                "query": "test query",
+                "content_type": "note"
+            }
+        )
         
-        # Verify the response contains some intelligence
-        self.assertTrue(len(data['intelligence']) > 0)
-    
-    def test_batch_endpoint(self):
-        """Test the analyze_privacy_tokens_batch endpoint."""
-        # Create batch request data
-        batch_request = {
-            'requests': [
-                {
-                    'privacy_text': 'Meeting with [PERSON_001]',
-                    'session_id': 'batch-test-1',
-                    'preserved_context': ['meeting', 'work'],
-                    'entity_relationships': {'[PERSON_001]': {'type': 'person'}}
-                },
-                {
-                    'privacy_text': 'Call [PHYSICIAN_001] about [CONDITION_001]',
-                    'session_id': 'batch-test-2',
-                    'preserved_context': ['call', 'medical'],
-                    'entity_relationships': {
-                        '[PHYSICIAN_001]': {'type': 'physician'},
-                        '[CONDITION_001]': {'type': 'condition'}
-                    }
-                }
-            ],
-            'batch_id': 'test-api-batch',
-            'session_id': 'api-batch-parent'
-        }
+        # Check response
+        assert response.status_code == 200
+        data = response.json()
+        assert "results" in data
+        assert len(data["results"]) == 1
+        assert data["results"][0]["type"] == "note"
         
-        # Send the request
-        response = self.app.post('/analyze_privacy_tokens_batch', 
-                                json=batch_request,
-                                content_type='application/json')
+        # Verify the mock was called correctly
+        mock_kb_manager.search_content.assert_called_once_with("test query", "note")
         
-        # Verify response code
-        self.assertEqual(response.status_code, 200)
+    def test_create_session_endpoint(self, client, mock_kb_manager):
+        """Test the /sessions endpoint."""
+        response = client.post(
+            "/sessions",
+            json={
+                "privacy_level": "minimal",
+                "metadata": {"source": "test"}
+            }
+        )
         
-        # Verify batch response structure
-        data = json.loads(response.data)
-        self.assertIn('responses', data)
-        self.assertEqual(len(data['responses']), 2)
-        self.assertIn('batch_id', data)
-        self.assertIn('total_processing_time_ms', data)
-        self.assertIn('batch_size', data)
-        self.assertIn('success_count', data)
-        self.assertIn('error_count', data)
-        self.assertIn('batch_intelligence_summary', data)
-    
-    def test_validation_error(self):
-        """Test validation error handling."""
-        # Create invalid request (missing required fields)
-        invalid_request = {
-            'privacy_text': 'Meeting with [PERSON_001]'
-            # Missing session_id, preserved_context, entity_relationships
-        }
+        # Check response
+        assert response.status_code == 200
+        data = response.json()
+        assert data["session_id"] == "test-session-id"
+        assert data["privacy_level"] == "minimal"
         
-        # Send the request
-        response = self.app.post('/analyze_privacy_tokens', 
-                                json=invalid_request,
-                                content_type='application/json')
+        # Verify the mock was called correctly
+        mock_kb_manager.session_manager.create_session.assert_called_once_with(
+            "minimal", 
+            {"source": "test"}
+        )
         
-        # Verify response code (should be 400 Bad Request)
-        self.assertEqual(response.status_code, 400)
+    def test_get_session_endpoint(self, client, mock_kb_manager):
+        """Test the /sessions/{session_id} endpoint."""
+        response = client.get("/sessions/test-session-id")
         
-        # Verify error message is present
-        data = json.loads(response.data)
-        self.assertIn('error', data)
-
-
-if __name__ == "__main__":
-    unittest.main() 
+        # Check response
+        assert response.status_code == 200
+        data = response.json()
+        assert data["id"] == "test-session-id"
+        assert data["privacy_level"] == "balanced"
+        
+        # Verify the mock was called correctly
+        mock_kb_manager.session_manager.get_session.assert_called_once_with("test-session-id")
+        
+    def test_get_session_not_found(self, client, mock_kb_manager):
+        """Test the /sessions/{session_id} endpoint with a non-existent session."""
+        # Configure the mock to return None for this specific session ID
+        mock_kb_manager.session_manager.get_session.return_value = None
+        
+        response = client.get("/sessions/non-existent-id")
+        
+        # Check response
+        assert response.status_code == 404
+        data = response.json()
+        assert "not found" in data["detail"]
+        
+    def test_conversation_endpoint(self, client, mock_kb_manager):
+        """Test the /conversation endpoint."""
+        response = client.post(
+            "/conversation",
+            json={
+                "message": "Test message",
+                "session_id": "test-session-id"
+            }
+        )
+        
+        # Check response
+        assert response.status_code == 200
+        data = response.json()
+        assert "response" in data
+        assert data["response"]["message"] == "I processed your input."
+        
+        # Verify the mock was called correctly
+        mock_kb_manager.process_and_respond.assert_called_once_with(
+            "Test message", 
+            "test-session-id"
+        )
+        
+    def test_error_handling(self, client, mock_kb_manager):
+        """Test API error handling."""
+        # Configure the mock to raise an exception
+        mock_kb_manager.process_stream_of_consciousness.side_effect = Exception("Test error")
+        
+        response = client.post(
+            "/process",
+            json={"content": "Error content"}
+        )
+        
+        # Check response
+        assert response.status_code == 500
+        data = response.json()
+        assert "detail" in data
+        assert "Test error" in data["detail"] 

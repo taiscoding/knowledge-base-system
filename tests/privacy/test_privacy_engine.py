@@ -284,7 +284,7 @@ class TestPrivacyEngine:
     def test_process_patterns(self, privacy_engine):
         """Test internal _process_patterns method."""
         text = "John Smith and Jane Doe"
-        patterns = [r'\b(?:[A-Z][a-z]+\s+[A-Z][a-z]+)\b']  # Simple name pattern
+        patterns = [re.compile(r'\b(?:[A-Z][a-z]+\s+[A-Z][a-z]+)\b')]  # Simple name pattern
         existing_mappings = {}
         inverse_mappings = {}
         
@@ -310,4 +310,81 @@ class TestPrivacyEngine:
         
         # Should use new token numbers
         assert "PERSON_003" not in new_mappings2  # Not overwriting existing
-        assert "PERSON_004" in new_mappings2  # Continuing from last token number 
+        assert "PERSON_004" in new_mappings2  # Continuing from last token number
+        
+    def test_deidentify_batch(self, privacy_engine):
+        """Test batch processing of multiple texts."""
+        texts = [
+            "John Smith works at ABC Corp.",
+            "Contact Sarah Johnson at 555-987-6543.",
+            "Email to john.smith@example.com about Project Phoenix."
+        ]
+        
+        session_id = privacy_engine.create_session()
+        results = privacy_engine.deidentify_batch(texts, session_id)
+        
+        # Verify we got results for all texts
+        assert len(results) == len(texts)
+        
+        # Verify each result is a DeidentificationResult
+        for result in results:
+            assert isinstance(result, DeidentificationResult)
+            
+        # Check token consistency across results
+        john_smith_tokens = set()
+        project_phoenix_tokens = set()
+        
+        for result in results:
+            for token, value in result.token_map.items():
+                if value == "John Smith":
+                    john_smith_tokens.add(token)
+                elif value == "Project Phoenix":
+                    project_phoenix_tokens.add(token)
+        
+        # Each entity should have exactly one token across all results
+        if john_smith_tokens:  # Only check if the entity was found
+            assert len(john_smith_tokens) == 1
+        
+        if project_phoenix_tokens:  # Only check if the entity was found
+            assert len(project_phoenix_tokens) == 1
+        
+        # Verify that all texts have been deidentified
+        assert "John Smith" not in results[0].text
+        assert "Sarah Johnson" not in results[1].text
+        assert "john.smith@example.com" not in results[2].text
+        
+    def test_deidentify_batch_error_handling(self, privacy_engine, mocker):
+        """Test error handling in batch processing."""
+        texts = [
+            "John Smith works at ABC Corp.",
+            "This text will cause an error.",
+            "Email to john.smith@example.com about Project Phoenix."
+        ]
+        
+        # Create a mock that raises an exception for the second text
+        original_deidentify = privacy_engine.deidentify
+        
+        def mock_deidentify(text, session_id):
+            if "error" in text:
+                raise ValueError("Test error")
+            return original_deidentify(text, session_id)
+        
+        mocker.patch.object(privacy_engine, 'deidentify', side_effect=mock_deidentify)
+        
+        session_id = privacy_engine.create_session()
+        results = privacy_engine.deidentify_batch(texts, session_id)
+        
+        # Should still get results for all texts
+        assert len(results) == len(texts)
+        
+        # Check each result by content, not by index (order may vary with parallel processing)
+        for result in results:
+            if "error" in result.text:
+                # This should be the error case with no tokens
+                assert not result.token_map
+                assert not result.entity_relationships
+            else:
+                # These should be successful results with tokens
+                assert result.token_map
+                assert isinstance(result.token_map, dict)
+                assert len(result.token_map) > 0 
