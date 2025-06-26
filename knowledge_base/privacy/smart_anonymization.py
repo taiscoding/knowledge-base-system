@@ -8,6 +8,9 @@ import re
 from typing import Dict, List, Any, Tuple, Optional
 from dataclasses import dataclass
 import logging
+from datetime import datetime
+
+from knowledge_base.privacy.token_intelligence_bridge import TokenIntelligenceBridge
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +42,9 @@ class PrivacyEngine:
         self.config = config or {}
         self.sessions = {}
         self._initialize_detection_patterns()
+        
+        # Initialize token intelligence bridge
+        self.token_intelligence_bridge = TokenIntelligenceBridge()
     
     def _initialize_detection_patterns(self):
         """Initialize patterns for detecting sensitive information."""
@@ -87,7 +93,7 @@ class PrivacyEngine:
         
         session_id = str(uuid.uuid4())
         self.sessions[session_id] = {
-            "created_at": str(logging.getLogger(__name__)),
+            "created_at": datetime.now().isoformat(),
             "privacy_level": privacy_level,
             "token_mappings": {},
             "entity_relationships": {},
@@ -109,7 +115,7 @@ class PrivacyEngine:
         """
         # Ensure session exists
         if session_id not in self.sessions:
-            self.create_session("balanced")
+            session_id = self.create_session("balanced")
             
         session = self.sessions[session_id]
         privacy_level = session["privacy_level"]
@@ -219,8 +225,6 @@ class PrivacyEngine:
         Returns:
             Enhanced text with context hints for AI
         """
-        from token_intelligence import TokenIntelligenceEngine
-        
         if session_id not in self.sessions:
             logger.warning(f"Session {session_id} not found")
             return text
@@ -229,38 +233,13 @@ class PrivacyEngine:
         preserved_context = session.get("preserved_context", [])
         entity_relationships = session.get("entity_relationships", {})
         
-        # Extract tokens from text
-        tokens = re.findall(r'\[([A-Z_]+(?:_\d+)?)\]', text)
-        
-        # Get intelligence for tokens
-        intelligence_engine = TokenIntelligenceEngine()
-        
-        from token_intelligence.core.data_models import TokenIntelligenceRequest
-        request = TokenIntelligenceRequest(
-            privacy_text=text,
-            preserved_context=preserved_context,
-            entity_relationships=entity_relationships,
-            session_id=session_id
+        # Use token intelligence bridge for enhancement
+        enhanced_text = self.token_intelligence_bridge.enhance_privacy_text(
+            text,
+            session_id,
+            preserved_context,
+            entity_relationships
         )
-        
-        response = intelligence_engine.generate_intelligence(request)
-        intelligence = response.intelligence
-        
-        # Create enhanced prompt with context
-        enhanced_text = text
-        
-        # Add intelligence context based on token type
-        if intelligence:
-            enhanced_text += "\n\nContext (Privacy-Preserved):\n"
-            for token in tokens:
-                token_context = {}
-                for key, value in intelligence.items():
-                    if key.startswith(token):
-                        context_key = key.replace(f"{token}_", "")
-                        token_context[context_key] = value
-                
-                if token_context:
-                    enhanced_text += f"\n[{token}]: {token_context}\n"
         
         return enhanced_text
     
@@ -344,6 +323,55 @@ class PrivacyEngine:
                     "type": token.split('_')[0],
                     "linked_entities": []
                 }
-                
-        # TODO: Implement more sophisticated relationship detection
-        # This would involve analyzing context to determine relationships 
+        
+        # Find relationships based on contextual proximity
+        # Group tokens by type for easier analysis
+        token_by_type = {}
+        for token in new_tokens:
+            token_type = token.split('_')[0]
+            if token_type not in token_by_type:
+                token_by_type[token_type] = []
+            token_by_type[token_type].append(token)
+        
+        # Define relationship rules between token types
+        relationship_rules = {
+            "PERSON": {
+                "PHONE": "has_phone_number",
+                "EMAIL": "has_email",
+                "PROJECT": "works_on",
+                "LOCATION": "located_at"
+            },
+            "PROJECT": {
+                "PERSON": "has_member",
+                "LOCATION": "located_at"
+            }
+        }
+        
+        # Apply relationship rules
+        for source_type, target_types in relationship_rules.items():
+            if source_type in token_by_type:
+                for source_token in token_by_type[source_type]:
+                    for target_type, relation in target_types.items():
+                        if target_type in token_by_type:
+                            for target_token in token_by_type[target_type]:
+                                # Add relationship if not already present
+                                if target_token not in entity_relationships[source_token]["linked_entities"]:
+                                    entity_relationships[source_token]["linked_entities"].append(target_token)
+                                    
+                                # Add reverse relationship 
+                                if source_token not in entity_relationships[target_token]["linked_entities"]:
+                                    entity_relationships[target_token]["linked_entities"].append(source_token)
+                                    
+                                # Store relationship type
+                                if "relationships" not in entity_relationships[source_token]:
+                                    entity_relationships[source_token]["relationships"] = {}
+                                    
+                                entity_relationships[source_token]["relationships"][target_token] = relation
+                                
+                                # Store reverse relationship type
+                                if "relationships" not in entity_relationships[target_token]:
+                                    entity_relationships[target_token]["relationships"] = {}
+                                    
+                                # Use the inverse relationship type
+                                inverse_relation = f"is_{relation}_of" if not relation.startswith("is_") else relation.replace("is_", "has_")
+                                entity_relationships[target_token]["relationships"][source_token] = inverse_relation 

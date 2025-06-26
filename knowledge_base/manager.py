@@ -9,6 +9,7 @@ import json
 import yaml
 import uuid
 import re
+import logging
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple, Union
@@ -18,6 +19,8 @@ from knowledge_base.content_types import Note, Todo, CalendarEvent
 from knowledge_base.utils.config import Config
 from knowledge_base.utils.helpers import generate_id, get_timestamp
 from knowledge_base.privacy import PrivacyEngine, PrivacySessionManager, DeidentificationResult
+
+logger = logging.getLogger(__name__)
 
 class KnowledgeBaseManager:
     """
@@ -313,8 +316,25 @@ class KnowledgeBaseManager:
             with open(filepath, 'w') as f:
                 json.dump(content_data, f, indent=2)
         else:
-            with open(filepath, 'w') as f:
-                f.write(content_data)
+            # Handle notes that come as dictionaries
+            if isinstance(content_data, dict) and content_type == "note":
+                # Format note dictionary as markdown
+                with open(filepath, 'w') as f:
+                    f.write(f"# {content_data.get('title', 'Untitled Note')}\n\n")
+                    f.write(f"{content_data.get('content', '')}\n\n")
+                    
+                    # Add metadata at the bottom
+                    f.write("---\n")
+                    if 'tags' in content_data:
+                        tags = ' '.join([f"#{tag}" if not tag.startswith('#') else tag 
+                                       for tag in content_data['tags']])
+                        f.write(f"Tags: {tags}\n")
+                    if 'category' in content_data:
+                        f.write(f"Category: {content_data['category']}\n")
+                    f.write(f"Created: {timestamp}\n")
+            else:
+                with open(filepath, 'w') as f:
+                    f.write(content_data)
         
         return str(filepath)
     
@@ -427,21 +447,32 @@ class KnowledgeBaseManager:
         # Generate suggestions based on extracted information
         suggestions = self._generate_suggestions(result["extracted_info"])
         
-        # De-anonymize suggestions for user readability
-        for suggestion in suggestions:
-            suggestion["text"] = self.privacy_engine.reconstruct(suggestion["text"], session_id)
+        try:
+            # De-anonymize suggestions for user readability
+            for suggestion in suggestions:
+                suggestion["text"] = self.privacy_engine.reconstruct(suggestion["text"], session_id)
         
-        # Generate AI response with privacy enhancement and de-anonymization
-        ai_response = self._generate_ai_response(result, session_id)
-        
-        # Return complete result
-        return {
-            **result,
-            "response": {
-                "message": ai_response,
-                "suggestions": suggestions
+            # Generate AI response with privacy enhancement and de-anonymization
+            ai_response = self._generate_ai_response(result, session_id)
+            
+            # Return complete result
+            return {
+                **result,
+                "response": {
+                    "message": ai_response,
+                    "suggestions": suggestions
+                }
             }
-        }
+        except Exception as e:
+            # Log the error but provide a basic response
+            logger.error(f"Error in process_and_respond: {e}")
+            return {
+                **result,
+                "response": {
+                    "message": "I've processed your input.",
+                    "suggestions": []
+                }
+            }
     
     def _extract_context_keywords(self, content: str) -> List[str]:
         """Extract important context keywords from content."""
