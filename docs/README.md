@@ -1,6 +1,6 @@
 # Token Intelligence System Documentation
 
-*Last updated: June 23, 2025*
+*Last updated: June 26, 2025*
 
 ## Documentation Contents
 
@@ -10,7 +10,15 @@ This directory contains comprehensive documentation for the Token Intelligence S
 
 - [API Documentation](api.md) - Detailed API endpoint reference
 - [Architecture](architecture.md) - System architecture and design
+- [Privacy Design](privacy_design.md) - Privacy protection approach and implementation
+- [Test Coverage Report](test_coverage.md) - Current test coverage status and goals
+- [Performance Optimization](performance_optimization.md) - Performance metrics and optimization techniques
 - [Configuration Modes](../CONFIG_MODES.md) - Configuration options and modes
+
+### Technical Implementation
+
+- [Privacy Implementation Details](examples/privacy_implementation.md) - Detailed explanation of pattern detection and entity relationships
+- [Performance Benchmarks](../tests/benchmarks/test_privacy_benchmarks.py) - Performance benchmark tests
 
 ### Usage Examples
 
@@ -22,6 +30,7 @@ The `examples` directory contains executable Python examples that demonstrate ho
 ### Additional Resources
 
 - [Refactoring Summary](../REFACTORING_SUMMARY.md) - Overview of the recent refactoring
+- [Reorganization Summary](../REORGANIZATION_SUMMARY.md) - Latest system reorganization updates
 - [Token Intelligence Roadmap](../TOKEN_INTELLIGENCE_ROADMAP.md) - Future development plans
 - [Contributing Guide](../CONTRIBUTING.md) - Guidelines for contributing to the project
 
@@ -47,6 +56,21 @@ To start the API server for testing:
 ```bash
 # From the project root
 token-intelligence-server --host 127.0.0.1 --port 5000 --debug
+```
+
+## Running Tests
+
+To run the test suite:
+
+```bash
+# Run all tests
+python -m pytest
+
+# Run privacy tests with coverage report
+python -m pytest tests/privacy/ --cov=knowledge_base.privacy
+
+# Run benchmarks
+python -m pytest tests/benchmarks/
 ```
 
 ## Documentation Updates

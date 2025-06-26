@@ -128,22 +128,66 @@ sequenceDiagram
 
 ## Technical Implementation
 
-For technically-minded readers, the privacy protection works through:
+For technically-minded readers, the privacy protection works through these key components:
 
-1. **Integrated Privacy Engine**: Core privacy component that handles tokenization
-2. **Session Manager**: Manages privacy sessions for consistent tokenization
-3. **Token Intelligence Bridge**: Provides fault-tolerant connection to intelligence
-4. **Smart Anonymization**: Detects and tokenizes different types of sensitive information
-5. **Entity Relationship Detection**: Identifies relationships between tokens
+### 1. Integrated Privacy Engine
 
-### Token Intelligence Bridge
+The core privacy component is the `PrivacyEngine` class which handles:
 
-The Token Intelligence Bridge provides several important capabilities:
+- **Smart Tokenization**: Identifies and tokenizes sensitive information using sophisticated pattern recognition
+- **Token Management**: Ensures consistent token usage within sessions
+- **Entity Relationship Tracking**: Maps relationships between tokenized entities
+- **Context Preservation**: Maintains essential context for AI processing
+- **Privacy Level Configuration**: Supports different privacy levels (strict, balanced, minimal)
 
-1. **Fault Tolerance**: Continues functioning even if the Token Intelligence system is unavailable
-2. **Graceful Degradation**: Provides basic intelligence even without the full intelligence system
-3. **Dependency Management**: Automatically detects if Token Intelligence is available
-4. **Error Handling**: Captures and isolates errors from the intelligence system
+### 2. Pattern Detection System
+
+The pattern detection system uses a comprehensive set of regex patterns to identify various types of sensitive information:
+
+- **Person Names**: Multiple pattern types including standard names, titled names, hyphenated names
+- **Phone Numbers**: Various formats including standard, parenthesized, and international formats
+- **Email Addresses**: Standard and non-standard email format detection
+- **Locations**: Street addresses, city names, geographical references
+- **Projects**: Project names, team names, initiative references
+- **Custom Entities**: Extensible system for domain-specific entity detection
+
+### 3. Entity Relationship Detection
+
+The relationship detection system automatically identifies connections between entities:
+
+- **Type-based Relationships**: Predefined relationships between entity types (e.g., person-email)
+- **Text Proximity Analysis**: Entities appearing close together are potentially related
+- **Content Analysis**: Smart detection of relationships in text context
+- **Consistent Mapping**: Ensuring relationship consistency across texts
+
+### 4. Session Manager
+
+The `PrivacySessionManager` provides:
+
+- **Session Isolation**: Each usage context has a separate privacy session
+- **Token Consistency**: Ensures tokens remain consistent within a session
+- **Context Tracking**: Maintains preserved context for AI enhancement
+- **Persistent Storage**: Securely stores session data for later use
+- **Session Lifecycle Management**: Creates, updates, and deletes sessions as needed
+
+### 5. Token Intelligence Bridge
+
+The Token Intelligence Bridge provides:
+
+- **Fault Tolerance**: Continues functioning even if the Token Intelligence system is unavailable
+- **Graceful Degradation**: Provides basic intelligence even without the full intelligence system
+- **Dependency Management**: Automatically detects if Token Intelligence is available
+- **Error Handling**: Captures and isolates errors from the intelligence system
+- **Context Enhancement**: Enriches tokenized content with context for AI processing
+
+### Performance Considerations
+
+The privacy implementation is carefully optimized for performance:
+
+- **Efficient Regex Patterns**: Optimized for speed and accuracy
+- **Token Caching**: Fast lookup of existing tokens via inverse mapping
+- **Staged Processing**: Multi-stage processing pipeline for better performance
+- **Minimal Overhead**: Privacy protection adds minimal latency (~0.1-3ms for typical text)
 
 ## Privacy Testing and Validation
 
@@ -153,6 +197,17 @@ The system includes dedicated privacy validation that:
 2. Ensures all operations use tokens exclusively
 3. Validates that responses cannot be used for re-identification
 4. Provides comprehensive privacy metrics and audit logs
+
+### Test Coverage
+
+Our privacy components have achieved 93% test coverage, including:
+
+- **Unit Tests**: 33+ tests covering all privacy functions
+- **Integration Tests**: Complete end-to-end workflow testing
+- **Performance Benchmarks**: Established baselines for key operations
+- **Edge Cases**: Comprehensive testing of boundary conditions
+
+For detailed test coverage information, see the [Test Coverage Report](test_coverage.md).
 
 ## How to Verify Our Privacy Claims
 

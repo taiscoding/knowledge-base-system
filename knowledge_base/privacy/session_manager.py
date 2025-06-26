@@ -39,9 +39,10 @@ class PrivacySessionManager:
                 try:
                     with open(session_file, 'r') as f:
                         session_data = json.load(f)
-                        session_id = session_file.stem.replace("session_", "")
+                        # Extract session ID from filename correctly
+                        session_id = session_file.stem.split("session_", 1)[1]
                         sessions[session_id] = session_data
-                except Exception as e:
+                except (Exception, IndexError) as e:
                     print(f"Error loading session {session_file}: {e}")
         
         return sessions
