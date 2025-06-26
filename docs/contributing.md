@@ -1,5 +1,7 @@
 # Contributing to Knowledge Base System
 
+*Last updated: July 2025*
+
 Thank you for your interest in contributing to the Knowledge Base System! This document provides guidelines for contributing code, documentation, and tests.
 
 ## Development Environment
@@ -99,6 +101,24 @@ def test_deidentify_with_emails(self, privacy_engine, sample_text):
     assert len(email_tokens) == 1
 ```
 
+## Error Handling
+
+All new code should use the established error handling framework:
+
+1. **Exception Hierarchy**:
+   - Use appropriate exception types from `knowledge_base.utils.helpers`
+   - Create specialized exceptions when needed (inheriting from base types)
+
+2. **Circuit Breaker Pattern**:
+   - Use circuit breakers for fault-prone operations
+   - See `knowledge_base.privacy.circuit_breaker` for implementation details
+   - Include fallback mechanisms for when the circuit is open
+
+3. **Graceful Degradation**:
+   - Implement fallback behaviors for non-critical failures
+   - Use try/except blocks to handle expected error cases
+   - Log all errors with appropriate context
+
 ## Performance Testing
 
 ### Benchmark Requirements
@@ -143,11 +163,31 @@ def test_deidentify_medium_text(self, benchmark, privacy_engine):
 
 ## Current Development Focus
 
-We're currently focused on Milestone 1 (Core Stability and Performance):
+We're currently focused on Milestone 2 (Enhanced Knowledge Organization):
 
-1. **Test Coverage**: Working toward 90%+ coverage across the codebase
-2. **Performance Optimization**: Improving the performance of key operations
-3. **Error Handling**: Adding comprehensive error handling
-4. **Documentation**: Ensuring all code is well-documented
+1. **Hierarchical Organization**:
+   - Implementing folder/category structure for knowledge items
+   - Adding parent-child relationships between content items
+   - Creating navigation capabilities across hierarchies
 
-For more details, see the [MILESTONE_1_PLAN.md](../MILESTONE_1_PLAN.md) file. 
+2. **Relationship Tracking**:
+   - Implementing explicit connections between content items
+   - Adding relationship types (references, dependencies, continuations)
+   - Creating bidirectional relationship maintenance
+
+3. **Semantic Search**:
+   - Integrating vector embeddings for content
+   - Implementing similarity-based search
+   - Adding relevance ranking and filters
+
+4. **Content Recommendations**:
+   - Creating recommendation engine based on content relationships
+   - Implementing "related items" functionality
+   - Adding contextual suggestions based on current content
+
+5. **Knowledge Graph Visualization**:
+   - Creating graph data structure for knowledge relationships
+   - Implementing basic visualization endpoints
+   - Adding interactive exploration capabilities
+
+For more details, see the [roadmap.md](./roadmap.md) and [development/records/MILESTONE_1_COMPLETION.md](../development/records/MILESTONE_1_COMPLETION.md) files. 
