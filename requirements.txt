@@ -1,45 +1,50 @@
-# Knowledge Base System Requirements
+# Knowledge Base System with Integrated Privacy Requirements
 
 # Core dependencies
 PyYAML>=6.0
 python-dateutil>=2.8.0
 watchdog>=3.0.0
+python-dotenv>=0.20.0
+typing-extensions>=4.0.0
+requests>=2.28.0
 
-# Token Intelligence API dependencies
+# Web API dependencies
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
 flask>=2.0.0
 flask-cors>=4.0.0
 
-# Optional dependencies for enhanced functionality
-# Uncomment as needed:
-
-# Natural language processing
-# nltk>=3.8
-# spacy>=3.4
-
-# Advanced date parsing
-# dateparser>=1.1.0
-
-# Better text processing
-# regex>=2022.0.0
+# Natural language processing (required for privacy detection)
+nltk>=3.8
+regex>=2022.0.0
+spacy>=3.4
 
 # CLI improvements
-# click>=8.0.0
-# rich>=13.0.0
+click>=8.0.0
+rich>=13.0.0
 
-# Database support (if needed later)
-# sqlite3 (built-in)
-# sqlalchemy>=1.4.0
+# Testing and development
+pytest>=7.0.0
+black>=23.0.0
+isort>=5.12.0
+flake8>=6.0.0
+
+# Advanced date parsing
+dateparser>=1.1.0
+
+# Security and encryption
+cryptography>=41.0.0
+bcrypt>=4.0.0
+
+# Optional dependencies (commented out by default)
+# Database support
+# sqlalchemy>=2.0.0
+# pymongo>=4.0.0
 
 # Search improvements
 # whoosh>=2.7.0
 # elasticsearch>=8.0.0
 
-# Web interface (enhanced)
-# fastapi>=0.68.0
-
-# Added from the code block
-python-dotenv>=0.20.0
-pytest>=7.0.0
-requests>=2.28.0
-dataclasses>=0.6; python_version < '3.7'
-typing-extensions>=4.0.0 
+# Add dataclasses backport for Python < 3.7
+dataclasses>=0.6; python_version < '3.7' 

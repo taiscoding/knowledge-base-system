@@ -11,12 +11,13 @@ import uuid
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple, Union
 import hashlib
 
 from knowledge_base.content_types import Note, Todo, CalendarEvent
 from knowledge_base.utils.config import Config
 from knowledge_base.utils.helpers import generate_id, get_timestamp
+from knowledge_base.privacy import PrivacyEngine, PrivacySessionManager, DeidentificationResult
 
 class KnowledgeBaseManager:
     """
@@ -30,16 +31,21 @@ class KnowledgeBaseManager:
     5. Saving and retrieving content
     """
     
-    def __init__(self, base_path: str = "."):
+    def __init__(self, base_path: str = ".", privacy_storage_dir: str = None):
         """
         Initialize the knowledge base manager.
         
         Args:
             base_path: Path to the knowledge base directory
+            privacy_storage_dir: Path for storing privacy session data
         """
         self.base_path = Path(base_path)
         self.config = Config(self.base_path).load_config()
         self.conventions = Config(self.base_path).load_conventions()
+        
+        # Initialize privacy components
+        self.privacy_engine = PrivacyEngine(self.config.get("privacy", {}))
+        self.session_manager = PrivacySessionManager(privacy_storage_dir)
         
     def process_stream_of_consciousness(self, content: str) -> Dict[str, Any]:
         """
@@ -349,4 +355,170 @@ class KnowledgeBaseManager:
                 return json.dumps(data, indent=2)
         else:
             with open(file_path, 'r') as f:
-                return f.read() 
+                return f.read()
+    
+    def process_with_privacy(self, content: str, session_id: str = None, 
+                            privacy_level: str = "balanced") -> Dict[str, Any]:
+        """
+        Process content with privacy preservation.
+        
+        This method first anonymizes the content using the privacy engine,
+        then processes it normally, maintaining the privacy throughout.
+        
+        Args:
+            content: Raw text input from user
+            session_id: Privacy session ID (created if None)
+            privacy_level: Privacy level for anonymization
+            
+        Returns:
+            Dictionary containing organized content and privacy metadata
+        """
+        # Create or get privacy session
+        if session_id is None:
+            session_id = self.session_manager.create_session(privacy_level)
+        elif not self.session_manager.get_session(session_id):
+            session_id = self.session_manager.create_session(privacy_level)
+            
+        # Anonymize the content
+        result = self.privacy_engine.deidentify(content, session_id)
+        
+        # Extract context keywords to preserve
+        context_keywords = self._extract_context_keywords(content)
+        self.session_manager.add_context(session_id, context_keywords)
+        
+        # Process the anonymized content
+        processed_result = self.process_stream_of_consciousness(result.text)
+        
+        # Add privacy metadata
+        processed_result["privacy"] = {
+            "session_id": session_id,
+            "privacy_level": result.privacy_level,
+            "tokens": result.tokens,
+            "is_anonymized": True
+        }
+        
+        # Mark extracted items as privacy-safe
+        self._mark_privacy_safe(processed_result["extracted_info"])
+        
+        return processed_result
+    
+    def process_and_respond(self, content: str, session_id: str = None) -> Dict[str, Any]:
+        """
+        Process content with privacy and generate intelligent response.
+        
+        This method handles the complete flow:
+        1. Privacy-preserving content processing
+        2. Extracting todos, events, etc.
+        3. Generating intelligent follow-up suggestions
+        4. Creating a natural language response
+        5. De-anonymizing responses for human readability
+        
+        Args:
+            content: Raw text input from user
+            session_id: Privacy session ID (created if None)
+            
+        Returns:
+            Dictionary with processing results and response
+        """
+        # Process with privacy
+        result = self.process_with_privacy(content, session_id)
+        session_id = result["privacy"]["session_id"]
+        
+        # Generate suggestions based on extracted information
+        suggestions = self._generate_suggestions(result["extracted_info"])
+        
+        # De-anonymize suggestions for user readability
+        for suggestion in suggestions:
+            suggestion["text"] = self.privacy_engine.reconstruct(suggestion["text"], session_id)
+        
+        # Generate AI response with privacy enhancement and de-anonymization
+        ai_response = self._generate_ai_response(result, session_id)
+        
+        # Return complete result
+        return {
+            **result,
+            "response": {
+                "message": ai_response,
+                "suggestions": suggestions
+            }
+        }
+    
+    def _extract_context_keywords(self, content: str) -> List[str]:
+        """Extract important context keywords from content."""
+        keywords = []
+        
+        # Extract nouns and verbs (simplified implementation)
+        words = content.split()
+        for word in words:
+            # Remove punctuation
+            clean_word = word.strip(".,;:!?")
+            if len(clean_word) > 3 and clean_word.lower() not in ["the", "and", "for", "with"]:
+                keywords.append(clean_word.lower())
+        
+        return keywords
+    
+    def _mark_privacy_safe(self, extracted_info: Dict[str, List]) -> None:
+        """Mark all extracted information as privacy-safe."""
+        for item_list in extracted_info.values():
+            for item in item_list:
+                if isinstance(item, dict):
+                    item["privacy_safe"] = True
+    
+    def _generate_suggestions(self, extracted_info: Dict[str, List]) -> List[Dict[str, Any]]:
+        """Generate intelligent suggestions based on extracted information."""
+        suggestions = []
+        
+        # Suggest based on todos
+        if extracted_info["todos"]:
+            suggestions.append({
+                "type": "todo_followup",
+                "text": "Would you like to set a reminder for this task?",
+                "action": "set_reminder"
+            })
+        
+        # Suggest based on events
+        if extracted_info["calendar_events"]:
+            suggestions.append({
+                "type": "calendar_followup",
+                "text": "Do you need help preparing for this meeting?",
+                "action": "meeting_prep"
+            })
+        
+        # Suggestion for notes
+        if extracted_info["notes"]:
+            suggestions.append({
+                "type": "note_followup",
+                "text": "Would you like to add more details to this note?",
+                "action": "edit_note"
+            })
+        
+        return suggestions
+    
+    def _generate_ai_response(self, result: Dict[str, Any], session_id: str) -> str:
+        """Generate an AI response with privacy enhancement."""
+        extracted = result["extracted_info"]
+        
+        # Build response acknowledging what was extracted
+        response_parts = []
+        
+        if extracted["todos"]:
+            response_parts.append(f"I've added {len(extracted['todos'])} task(s) to your to-do list.")
+        
+        if extracted["calendar_events"]:
+            response_parts.append(f"I've scheduled {len(extracted['calendar_events'])} event(s) in your calendar.")
+        
+        if extracted["notes"]:
+            response_parts.append(f"I've saved a note with this information.")
+        
+        # Add a follow-up if appropriate
+        if extracted["todos"] or extracted["calendar_events"]:
+            response_parts.append("Is there anything else you need help with regarding this?")
+        
+        # Use the privacy engine to ensure response is privacy-safe
+        response = " ".join(response_parts)
+        
+        # De-anonymize the response before returning to the user
+        # This ensures any privacy tokens are replaced with the original values
+        response = self.privacy_engine.reconstruct(response, session_id)
+        
+        return response 

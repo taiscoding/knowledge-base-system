@@ -1,19 +1,21 @@
-# Knowledge Base & Token Intelligence System
+# Knowledge Base System with Integrated Privacy
 
-A privacy-first knowledge management system that combines intuitive data organization with privacy-preserving token intelligence.
+A unified system that combines intelligent knowledge management with built-in privacy protection.
 
 ## 👋 Welcome!
 
-This system provides a secure way to manage your knowledge while protecting privacy through token-based intelligence. The project consists of two integrated components:
+This system provides a secure way to manage your knowledge while protecting privacy through intelligent tokenization. The project integrates:
 
 1. **Knowledge Base Manager**: Organizes and processes your notes, todos, events, and other content
-2. **Token Intelligence System**: Generates insights from privacy tokens without accessing original data
+2. **Privacy Layer**: Ensures your data remains private through smart anonymization
+3. **Token Intelligence**: Generates insights from privacy tokens without accessing original data
 
 ## ✨ Key Features
 
 ### Privacy-First Design
-- **Zero Data Exposure**: Token intelligence works exclusively with privacy tokens, never with original data
-- **Privacy Layer Integration**: Seamless connection with the Sankofa privacy system
+- **Smart Anonymization**: Preserves essential information while protecting personal identifiers
+- **Automatic De-anonymization**: System responses are automatically de-anonymized for users
+- **Entity Relationships**: Links related information (person ↔ phone, email, etc.) using privacy tokens
 - **Perfect Session Isolation**: Complete privacy boundaries between usage contexts
 
 ### Smart Organization
@@ -25,7 +27,7 @@ This system provides a secure way to manage your knowledge while protecting priv
 - **Multiple Content Types**: Notes, tasks, calendar events, projects, and more
 - **Search & Discovery**: Find connections across your knowledge base
 - **API Integration**: Connect with other tools through a clean REST API
-- **Batch Processing**: Efficiently process multiple requests
+- **Conversational Interface**: Chat naturally with your knowledge base
 
 ## 🚀 Getting Started
 
@@ -45,52 +47,56 @@ pip install -e .
 
 ```python
 from knowledge_base import KnowledgeBaseManager
-from token_intelligence import TokenIntelligenceEngine
 
-# Initialize the knowledge base
+# Initialize the integrated knowledge base
 kb = KnowledgeBaseManager()
 
-# Process content
-result = kb.process_stream_of_consciousness(
-    "Need to meet with John about the marketing project tomorrow at 2pm."
+# Create a privacy session
+session_id = kb.session_manager.create_session("balanced")
+
+# Process content with privacy
+result = kb.process_with_privacy(
+    "Need to meet with John about the marketing project tomorrow at 2pm.",
+    session_id=session_id
 )
 
 # See what was extracted
 print(f"Found {len(result['extracted_info']['todos'])} todos")
 print(f"Found {len(result['extracted_info']['calendar_events'])} events")
+print(f"Privacy-safe text: {result['original_content']}")
 
-# Use token intelligence (privacy-preserving)
-engine = TokenIntelligenceEngine()
-response = engine.generate_intelligence(
-    privacy_text="Meeting with [PERSON_001] about [PROJECT_002]",
-    preserved_context=["meeting", "project"],
-    session_id="example-session"
+# Process and get AI response
+response = kb.process_and_respond(
+    "Call John tomorrow about the project status.",
+    session_id=session_id
 )
 
-print(f"Intelligence type: {response.intelligence_type}")
-print(f"Intelligence: {response.intelligence}")
+print(f"AI Response: {response['response']['message']}")
+print(f"Suggestions: {[s['text'] for s in response['response']['suggestions']]}")
 ```
 
 ## 🔄 System Architecture
 
-The system is designed with clear separation between components:
+The system is designed with privacy built into every component:
 
 ```mermaid
 graph TD
-    A[User Content] -->|Tokenizes sensitive data| B[Sankofa Privacy Layer]
+    A[User Content] -->|Tokenization| B[Privacy Engine]
     B -->|Tokenized Content| C[Knowledge Base Manager]
     
     C -->|Organization & Storage| D[Knowledge Base]
     C -->|Privacy-Safe Tokens| E[Token Intelligence Engine]
     
     E -->|Token Intelligence| C
-    C -->|Enhanced Content| B
-    B -->|De-tokenizes| F[Enhanced User Content]
+    C -->|Enhanced Content| F[AI Response Generator]
+    F -->|Anonymized Response| B
+    B -->|De-anonymized Response| A
     
     subgraph "Knowledge System"
     C
     D
     E
+    F
     end
     
     subgraph "Privacy Layer"
@@ -98,10 +104,16 @@ graph TD
     end
 ```
 
+This flow ensures that:
+1. User input is properly anonymized
+2. Processing happens with privacy tokens (never the original data)
+3. Responses are automatically de-anonymized before being shown to users
+
+- **Privacy Engine**: Smart anonymization of sensitive information
 - **Knowledge Base**: Manages content organization and processing
 - **Token Intelligence**: Provides privacy-safe insights from tokens
 - **Content Store**: Securely stores all your knowledge
-- **Privacy Layer**: Ensures complete privacy through tokenization
+- **Response Generator**: Creates helpful responses and suggestions
 
 ## 📚 Documentation
 
@@ -117,12 +129,48 @@ For detailed information, see:
 
 This system was built with privacy as the core principle:
 
-1. **Token-Only Intelligence**: The system never needs or processes original personal data
-2. **Zero Re-identification Risk**: Design prevents any possibility of reconstructing original data
-3. **Perfect Session Isolation**: Usage contexts are kept completely separate
-4. **Transparent Design**: Privacy architecture is clearly documented
+1. **Built-in Privacy**: Privacy engine integrated into every operation
+2. **Smart Anonymization**: Only sensitive data is tokenized, preserving essential context
+3. **Zero Re-identification Risk**: Design prevents any possibility of reconstructing original data
+4. **Session Isolation**: Usage contexts are kept completely separate
+5. **Entity Relationships**: Understand connections between entities without exposing identities
 
 For a complete privacy overview, see our [Privacy Design](docs/privacy_design.md) documentation.
+
+## 📝 Usage Examples
+
+### CLI Interface
+
+```bash
+# Process text with privacy
+knowledge-base process-private "Call Jane tomorrow about the project deadline"
+
+# Interactive chat mode with privacy
+knowledge-base chat
+
+# Create a new privacy session
+knowledge-base create-session --privacy-level balanced
+
+# Search across content
+knowledge-base search "project"
+```
+
+### API Usage
+
+```bash
+# Start the API server
+python -m scripts.api_server
+
+# Create a session and process with privacy
+curl -X POST "http://localhost:8000/sessions" \
+  -H "Content-Type: application/json" \
+  -d '{"privacy_level": "balanced"}'
+
+# Process with privacy
+curl -X POST "http://localhost:8000/process-private" \
+  -H "Content-Type: application/json" \
+  -d '{"content": "Call John at 555-0123", "session_id": "SESSION_ID_HERE"}'
+```
 
 ## 📄 License
 
