@@ -13,6 +13,7 @@ This system provides a secure way to manage your knowledge while protecting priv
 5. **Relationship Management**: Create explicit connections between content items
 6. **Semantic Search**: Find content based on meaning, not just keywords
 7. **Smart Recommendations**: Get contextual suggestions based on relationships and content similarity
+8. **Web Interface**: Modern, responsive UI for interacting with the knowledge base
 
 ## ✨ Key Features
 
@@ -33,6 +34,13 @@ This system provides a secure way to manage your knowledge while protecting priv
 - **Intelligent Processing**: Automatically categorizes and organizes your content
 - **Context Awareness**: Recognizes relationships between different pieces of information
 - **Personalized Intelligence**: Learns from usage patterns while maintaining privacy
+
+### Web Interface
+- **Responsive Design**: Optimized for desktop, tablet, and mobile devices
+- **Keyboard Shortcuts**: Improve productivity with customizable shortcuts
+- **Profile Management**: Comprehensive user profile and preferences
+- **Animated Transitions**: Smooth page transitions and interface animations
+- **Material Design**: Modern UI with consistent Material Design components
 
 ### Rich Capabilities  
 - **Multiple Content Types**: Notes, tasks, calendar events, projects, references, and folders
@@ -125,6 +133,27 @@ response = kb.process_and_respond(
 print(f"AI Response: {response['response']['message']}")
 ```
 
+### Web Interface
+
+To use the web interface:
+
+```bash
+# Navigate to the web interface directory
+cd web_interface
+
+# Start the backend API server
+cd backend
+pip install -r requirements.txt
+python main.py
+
+# In a separate terminal, start the frontend
+cd frontend
+npm install
+npm start
+```
+
+Access the web interface at `http://localhost:3000`
+
 ## 🔄 System Architecture
 
 The system is designed with privacy built into every component and enhanced with hierarchical organization:
@@ -142,7 +171,7 @@ graph TD
     F -->|Anonymized Response| B
     B -->|De-anonymized Response| A
 
-    %% New components and flows
+    %% Components and flows
     C -->|Content Management| G[Content Manager]
     C -->|Hierarchical Organization| H[Hierarchy Manager]
     C -->|Relationship Management| I[Relationship Manager]
@@ -156,6 +185,12 @@ graph TD
     J -->|Search Results| C
     K -->|Content Suggestions| C
     L -->|Graph Data| C
+    
+    %% Web interface
+    A <-->|API Calls| M[Web Interface]
+    M -->|User Interactions| N[React Frontend]
+    N -->|API Requests| O[FastAPI Backend]
+    O -->|Data Access| C
     
     subgraph "Knowledge System"
     C
@@ -173,6 +208,12 @@ graph TD
     subgraph "Privacy Layer"
     B
     end
+    
+    subgraph "Web Interface"
+    M
+    N
+    O
+    end
 ```
 
 This enhanced flow ensures that:
@@ -181,6 +222,7 @@ This enhanced flow ensures that:
 3. Content is organized hierarchically with explicit relationships
 4. Semantic search and recommendations enhance discoverability
 5. Responses are automatically de-anonymized before being shown to users
+6. Web interface provides an intuitive, responsive user experience
 
 **Core Components:**
 - **Privacy Engine**: Smart anonymization of sensitive information
@@ -191,6 +233,7 @@ This enhanced flow ensures that:
 - **Recommendation Engine**: Context-aware content suggestions
 - **Knowledge Graph**: Visualization of content relationships
 - **Token Intelligence**: Provides privacy-safe insights from tokens
+- **Web Interface**: Modern React/TypeScript interface with Material-UI
 
 ## 📚 Documentation
 
@@ -205,6 +248,7 @@ For detailed information, see:
 - [Performance Optimization](docs/performance_optimization.md) - Optimization techniques
 - [Contributing Guide](docs/contributing.md) - How to contribute to the project
 - [Troubleshooting Guide](docs/troubleshooting.md) - Solutions to common issues
+- [Web Interface Documentation](web_interface/frontend/docs/README.md) - Web UI features and usage
 
 ## 🔒 Privacy & Security
 
@@ -320,12 +364,32 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - `docs/` - User and developer documentation
 - `scripts/` - Helper scripts and utilities
 - `development/` - Development resources, planning documents, and historical records
+- `web_interface/` - Web UI with React/TypeScript frontend and FastAPI backend
 
 ## Latest Improvements
 
-### Milestone 2 Completion (v1.2.0) - June 2025
+### Milestone 4 Completion (v1.3.0) - June 2025
 
-We're excited to announce the completion of Milestone 2, which includes major enhancements to content organization:
+We're excited to announce the completion of Milestone 4, which delivers a comprehensive web interface:
+
+#### Web Interface Features
+- **Modern UI**: React/TypeScript implementation with Material-UI components
+- **Responsive Design**: Optimized for desktop, tablet, and mobile devices
+- **User Profile**: Comprehensive profile management and preferences
+- **Keyboard Shortcuts**: Productivity enhancements with keyboard navigation
+- **Interactive Visualizations**: Dynamic knowledge graph visualization
+- **Page Transitions**: Smooth animations between routes and content changes
+
+#### User Experience Improvements
+- **Intuitive Navigation**: Sidebar and breadcrumb navigation
+- **Content Management**: Create, edit, and organize all content types
+- **Search Integration**: Both text-based and semantic search capabilities
+- **Privacy Controls**: User-friendly privacy settings management
+- **Dynamic Dashboard**: Actionable insights and content organization
+
+### Milestone 3 Completion (v1.2.0) - May 2025
+
+Major enhancements to content organization:
 
 #### Hierarchical Organization
 - **Folder Structure**: Create unlimited nested folders to organize your content
@@ -350,30 +414,3 @@ We're excited to announce the completion of Milestone 2, which includes major en
 - **Path Discovery**: Find connections between seemingly unrelated content
 - **Cluster Detection**: Identify groups of related content
 - **Interactive Exploration**: Navigate through your knowledge visually
-
-### Previous Milestone 1 Achievements
-
-#### Error Handling Framework
-- Comprehensive exception hierarchy with specialized types
-- Consistent error handling patterns throughout codebase
-- Graceful degradation strategies for non-critical failures
-- Detailed logging with context for improved debugging
-
-#### Circuit Breaker Pattern
-- Fault tolerance using the circuit breaker pattern
-- Protection for critical system components
-- Automatic recovery mechanisms for transient failures
-- Configurable thresholds and timeouts
-- Metrics collection for monitoring
-
-#### Test Coverage Improvements
-- Increased overall coverage from 72% to 91%
-- Privacy components now at 94% coverage
-- Core components at 89% coverage
-- Added parameterized tests for comprehensive case coverage
-
-#### Performance Optimizations
-- Pre-compiled regex patterns for faster matching
-- Batch processing for improved throughput
-- Optimized token processing for better performance
-- Client-side caching for frequently accessed data

@@ -1,5 +1,7 @@
 # Knowledge Base System: Frequently Asked Questions
 
+*Last updated: June 2025*
+
 ## General
 
 ### What is the Knowledge Base System?
@@ -10,10 +12,13 @@ The Knowledge Base System is a tool for organizing and processing unstructured c
 - Privacy protection for sensitive information
 - Token intelligence for privacy-safe insights
 - Searching across different content types
+- Web interface for intuitive knowledge management
+- Keyboard shortcuts for productivity
+- Responsive design for all device sizes
 - Integration with other applications via API
 
 ### What programming languages/platforms are supported?
-The system is built in Python and can be used in any Python environment (3.8+). The API server allows integration with any programming language or platform that can make HTTP requests.
+The system is built in Python and can be used in any Python environment (3.8+). The web interface is built with React/TypeScript and the API server allows integration with any programming language or platform that can make HTTP requests.
 
 ## Setup and Installation
 
@@ -28,8 +33,27 @@ cd knowledge-base-system
 pip install -e .
 ```
 
+### How do I set up the web interface?
+```bash
+# Navigate to the web interface directory
+cd web_interface
+
+# Start the backend API server
+cd backend
+pip install -r requirements.txt
+python main.py
+
+# In a separate terminal, start the frontend
+cd frontend
+npm install
+npm start
+```
+
+Access the web interface at http://localhost:3000
+
 ### What are the system requirements?
 - Python 3.8 or higher
+- Node.js 16+ (for web interface)
 - 4GB RAM (minimum)
 - 100MB disk space (plus space for your content)
 
@@ -38,8 +62,43 @@ Configuration is managed through:
 - YAML files in the `config/` directory
 - Environment variables (prefixed with `KB_`)
 - Command-line arguments for the CLI
+- Settings page in the web interface
 
-## Usage
+## Web Interface
+
+### What features does the web interface offer?
+- Dashboard with activity tracking and statistics
+- Content management (create, edit, organize)
+- Knowledge graph visualization
+- User profile management
+- Keyboard shortcuts
+- Responsive design for all devices
+- Search functionality with filters and sorting
+- Privacy controls management
+
+### What browsers are supported by the web interface?
+The web interface supports:
+- Chrome/Edge (latest 2 versions)
+- Firefox (latest 2 versions)
+- Safari (latest 2 versions)
+- Mobile browsers on iOS and Android
+
+### How do I use keyboard shortcuts?
+Press `Ctrl+?` to view all available keyboard shortcuts. Common shortcuts include:
+- `Ctrl+K`: Open search
+- `Ctrl+D`: Go to dashboard
+- `Ctrl+Alt+N`: Create new note
+- `Ctrl+Alt+T`: Create new todo
+- `Ctrl+P`: Open profile
+
+### Can I customize the web interface?
+Yes, the web interface provides several customization options:
+- User preferences in the Settings page
+- Theme customization (light/dark mode)
+- Dashboard widget configuration
+- Keyboard shortcut enabling/disabling
+
+## Command Line Usage
 
 ### How do I process content?
 ```python
@@ -65,6 +124,7 @@ Yes, you can integrate the Knowledge Base System with other applications:
 - Use the Python API in your application
 - Use the HTTP API for non-Python applications
 - Process exported notes from your existing system
+- Use the web interface directly
 
 ## Privacy Features
 
@@ -77,7 +137,7 @@ The system detects sensitive information (names, emails, projects, etc.) and rep
 - **Enhanced**: Maximum privacy with additional context analysis
 
 ### Can I use my own privacy rules?
-Yes, you can configure privacy rules in `config/sankofa_integration.yaml` to customize entity detection and tokenization.
+Yes, you can configure privacy rules in `config/sankofa_integration.yaml` to customize entity detection and tokenization. In the web interface, you can manage privacy settings through the Settings page.
 
 ## Error Handling and Troubleshooting
 
@@ -103,6 +163,8 @@ handler = logging.StreamHandler()
 handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
 logging.getLogger('knowledge_base').addHandler(handler)
 ```
+
+For web interface issues, check browser console logs and network requests.
 
 ### What is the circuit breaker pattern and why is it used?
 The circuit breaker pattern is a fault tolerance mechanism that prevents cascading failures by monitoring for failures and "tripping" (like an electrical circuit breaker) when failures exceed a threshold. This:
@@ -191,11 +253,13 @@ The system uses:
 2. **Non-Python applications**: Use the REST API provided by the API server
 3. **Data import/export**: Use the export/import functionality to exchange data
 
-### How do I build a frontend for the Knowledge Base?
+### How do I build a custom frontend for the Knowledge Base?
 You can build a frontend using the REST API. Simply:
 1. Start the API server: `kb-api-server`
 2. Make HTTP requests to the API endpoints
 3. Handle the JSON responses in your frontend code
+
+Alternatively, you can customize the existing React frontend.
 
 ### Does the Knowledge Base support webhooks or callbacks?
 Not currently, but you can implement polling using the API to check for changes.
@@ -264,10 +328,32 @@ result2 = kb.process_stream_of_consciousness("Email from John", session_id=sessi
 ### Why am I seeing "Resource temporarily unavailable" errors?
 This may indicate that a circuit breaker is open. Check the circuit breaker status and consider using fallback options or waiting for recovery.
 
+### Why is the web interface not loading properly?
+Check for:
+- Browser console errors (F12 to open developer tools)
+- API server running and accessible
+- Node.js version compatibility (16+ required)
+- Missing npm packages (run `npm install` again)
+
+### How do I restart the web interface after changes?
+The development server should automatically reload on changes. If it doesn't:
+1. Stop both frontend and backend servers (Ctrl+C)
+2. Restart the backend: `cd web_interface/backend && python main.py`
+3. Restart the frontend: `cd web_interface/frontend && npm start`
+
+## Mobile Support
+
+### Can I use the Knowledge Base System on mobile devices?
+Yes, the web interface is responsive and works on mobile browsers. It automatically adapts to different screen sizes and touch interfaces.
+
+### Are there mobile apps available?
+There are no native mobile apps yet, but the web interface is designed to work well on mobile devices. Native mobile applications are planned for future releases.
+
 ## Support and Community
 
 ### Where can I get help?
 - Check the documentation: [User Guide](user_guide.md), [API Reference](api.md)
+- View web interface documentation: [Web Interface Docs](../web_interface/frontend/docs/README.md)
 - Open issues on GitHub
 - Join the community forum at [community.knowledgebase.dev](https://community.knowledgebase.dev)
 

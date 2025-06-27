@@ -11,6 +11,37 @@ This knowledge management system helps you:
 3. **Get intelligent insights** - enhance your data with privacy-preserving intelligence
 4. **Keep your sensitive data private** - work with a system designed for privacy
 
+## Web Interface
+
+For users of the web interface, here are some additional features:
+
+### User Profile Management
+
+The system includes comprehensive user profile management features:
+
+- Personal information management
+- Preference settings for UI and content
+- Security settings for account protection
+- Tag management for interests and expertise areas
+
+To access your profile, click your avatar in the top-right corner of the interface and select "Profile", or use the keyboard shortcut `Ctrl+P`.
+
+For detailed information, see the [User Profile Documentation](../web_interface/frontend/docs/user_profile.md).
+
+### Keyboard Shortcuts
+
+The web interface supports keyboard shortcuts for faster navigation and improved productivity:
+
+- `Ctrl+K`: Open search
+- `Ctrl+D`: Go to dashboard
+- `Ctrl+Alt+N`: Create new note
+- `Ctrl+Alt+T`: Create new todo
+- `Ctrl+?`: Show all available shortcuts
+
+To view all available shortcuts, press `Ctrl+?` or click the keyboard icon in the top toolbar.
+
+For a complete list of shortcuts, see the [Keyboard Shortcuts Documentation](../web_interface/frontend/docs/keyboard_shortcuts.md).
+
 ## Basic Concepts
 
 Before diving into usage, let's understand some key concepts:
