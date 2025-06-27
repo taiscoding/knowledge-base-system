@@ -348,6 +348,181 @@ kb-cli export --output exported_kb.json
 kb-cli import exported_kb.json
 ```
 
+## Hierarchical Organization
+
+The Knowledge Base System now supports hierarchical organization of content through folders, making it easier to navigate and find your information.
+
+### Working with Folders
+
+You can create folders and organize your content in a hierarchical structure:
+
+```python
+# Create folders
+kb = KnowledgeBaseManager()
+root_folder = kb.create_folder("Root Folder")
+work_folder = kb.create_folder("Work", parent_id=root_folder["id"])
+projects_folder = kb.create_folder("Projects", parent_id=work_folder["id"])
+
+# Create content within a folder
+project_note = kb.create_content({
+    "title": "Project Phoenix",
+    "content": "Notes about Project Phoenix implementation...",
+    "category": "work",
+    "tags": ["project", "phoenix"]
+}, "note", parent_id=projects_folder["id"])
+
+# Get folder contents
+work_contents = kb.list_folder_contents(work_folder["id"])
+
+# Get folder tree
+folder_tree = kb.get_folder_tree(root_folder["id"])
+
+# Move content to a different folder
+kb.move_content_to_folder(project_note["id"], work_folder["id"])
+```
+
+### Navigating the Hierarchy
+
+Each content item has a path that reflects its position in the hierarchy:
+
+```python
+# Get content by path
+content = kb.content_manager.get_content_by_path("/Work/Projects/Project Phoenix")
+
+# Get parent folder
+parent_id = kb.hierarchy_manager.get_parent_id(content["id"])
+parent = kb.content_manager.get_content(parent_id)
+
+# Get breadcrumb path
+breadcrumb = kb.hierarchy_manager.get_breadcrumb(content["id"])
+for item in breadcrumb:
+    print(f"{item['title']} > ", end="")
+```
+
+## Relationship Management
+
+The system allows you to create explicit relationships between content items, helping you understand how different pieces of information are connected.
+
+### Creating Relationships
+
+You can define different types of relationships between content items:
+
+```python
+# Create content items
+project = kb.create_content({
+    "title": "Project Phoenix",
+    "description": "A major project initiative.",
+    "category": "work"
+}, "project")
+
+task = kb.create_content({
+    "title": "Create project timeline",
+    "description": "Develop a timeline for Project Phoenix.",
+    "priority": "high",
+    "status": "active"
+}, "todo")
+
+note = kb.create_content({
+    "title": "Meeting Notes",
+    "content": "Notes from the project kickoff meeting.",
+    "category": "work"
+}, "note")
+
+# Create relationships between items
+kb.create_relationship(project["id"], task["id"], RelationshipType.DEPENDENCY)
+kb.create_relationship(project["id"], note["id"], RelationshipType.REFERENCE)
+```
+
+### Relationship Types
+
+The system supports several types of relationships:
+
+- **PARENT_CHILD**: Hierarchical relationship (folder containment)
+- **REFERENCE**: One content references another
+- **DEPENDENCY**: One content depends on another
+- **CONTINUATION**: One content continues from another
+- **RELATED**: General relationship between content items
+
+### Working with Related Content
+
+You can retrieve related content and filter by relationship type:
+
+```python
+# Get all related content
+related_items = kb.get_related_content(project["id"], include_content=True)
+
+# Filter by relationship type
+dependencies = kb.get_related_content(
+    project["id"], 
+    relationship_type=RelationshipType.DEPENDENCY,
+    include_content=True
+)
+
+# Delete a relationship
+kb.delete_relationship(project["id"], note["id"])
+```
+
+## Semantic Search and Recommendations
+
+The system now provides powerful semantic search capabilities and content recommendations based on meaning rather than just keywords.
+
+### Semantic Search
+
+You can search for content semantically using natural language queries:
+
+```python
+# Semantic search across all content
+results = kb.search_semantic("artificial intelligence and machine learning")
+
+# Filter by content types
+filtered_results = kb.search_semantic(
+    "web design principles", 
+    content_types=["note", "project"],
+    top_k=5
+)
+
+# Find similar content
+similar_items = kb.similar_content(note["id"], top_k=3)
+```
+
+Unlike traditional keyword search, semantic search understands the meaning of your query and returns results that are conceptually related, even if they don't contain the exact same words.
+
+### Content Recommendations
+
+The system can recommend related content based on relationships, semantic similarity, and user interactions:
+
+```python
+# Get recommendations for a specific content item
+recommendations = kb.get_recommendations(project["id"])
+
+# Get contextual recommendations based on current activity
+context = {
+    "content_id": note["id"],
+    "text": "I'm writing about knowledge management systems and methodologies."
+}
+suggestions = kb.get_contextual_suggestions(context)
+```
+
+Recommendations are scored and include a reason explaining why each item was recommended, helping you understand the relationships between content items.
+
+### Knowledge Graph
+
+You can build a knowledge graph to visualize relationships between content items:
+
+```python
+# Build a knowledge graph starting from a specific content item
+graph = kb.build_knowledge_graph([project["id"]])
+
+# Visualize the graph (requires additional visualization library)
+# Visualization not included in this example
+
+# Access graph components
+nodes = graph["nodes"]
+edges = graph["edges"]
+```
+
+The knowledge graph helps you discover connections between different pieces of information and navigate your knowledge base visually.
+
 ## API Server
 
 An HTTP API server is available for integrating with other applications:

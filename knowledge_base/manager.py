@@ -15,13 +15,19 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple, Union
 import hashlib
 
-from knowledge_base.content_types import Note, Todo, CalendarEvent
+from knowledge_base.content_types import Note, Todo, CalendarEvent, RelationshipType
 from knowledge_base.utils.config import Config
 from knowledge_base.utils.helpers import (
     generate_id, get_timestamp, KnowledgeBaseError, ContentProcessingError,
     StorageError, ConfigurationError, PrivacyError, ValidationError, NotFoundError
 )
 from knowledge_base.privacy import PrivacyEngine, PrivacySessionManager, DeidentificationResult
+from knowledge_base.core.content_manager import ContentManager
+from knowledge_base.core.relationship_manager import RelationshipManager
+from knowledge_base.core.hierarchy_manager import HierarchyManager
+from knowledge_base.core.semantic_search import SemanticSearch
+from knowledge_base.core.recommendation_engine import RecommendationEngine
+from knowledge_base.core.knowledge_graph import KnowledgeGraph
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +59,13 @@ class KnowledgeBaseManager:
             # Initialize privacy components
             self.privacy_engine = PrivacyEngine(self.config.get("privacy", {}))
             self.session_manager = PrivacySessionManager(privacy_storage_dir)
+            # Integrate core managers for hierarchy, relationships, search, and recommendations
+            self.relationship_manager = RelationshipManager(self.base_path)
+            self.hierarchy_manager = HierarchyManager(self.base_path, relationship_manager=self.relationship_manager)
+            self.content_manager = ContentManager(self.base_path, relationship_manager=self.relationship_manager, hierarchy_manager=self.hierarchy_manager)
+            self.semantic_search_engine = SemanticSearch(self.base_path, content_manager=self.content_manager)
+            self.recommendation_engine = RecommendationEngine(self.base_path, content_manager=self.content_manager, semantic_search=self.semantic_search_engine, relationship_manager=self.relationship_manager)
+            self.knowledge_graph = KnowledgeGraph(self.base_path, content_manager=self.content_manager, relationship_manager=self.relationship_manager, hierarchy_manager=self.hierarchy_manager)
             
         except FileNotFoundError as e:
             logger.error(f"Configuration file not found: {e}")
@@ -707,3 +720,77 @@ class KnowledgeBaseManager:
         except Exception as e:
             logger.error(f"Error generating AI response: {e}")
             return "I've processed your input."  # Fallback response 
+
+    # ------------------------------------------------------------------
+    # Hierarchical, Relationship, Search & Recommendation API
+    # ------------------------------------------------------------------
+
+    # Content CRUD operations
+    def create_content(self, content_data: Dict[str, Any], content_type: str, parent_id: Optional[str] = None) -> Dict[str, Any]:
+        """Create a content item using the integrated ContentManager."""
+        return self.content_manager.create_content(content_data, content_type, parent_id)
+
+    def get_content(self, content_id: str, include_relationships: bool = False) -> Dict[str, Any]:
+        """Retrieve a content item by ID."""
+        return self.content_manager.get_content(content_id, include_relationships)
+
+    def update_content(self, content_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
+        """Update a content item."""
+        return self.content_manager.update_content(content_id, updates)
+
+    def delete_content(self, content_id: str) -> bool:
+        """Delete a content item."""
+        return self.content_manager.delete_content(content_id)
+
+    # Folder helpers
+    def create_folder(self, title: str, parent_id: Optional[str] = None, description: str = "", icon: str = "folder") -> Dict[str, Any]:
+        """Create a new folder in the hierarchy."""
+        return self.content_manager.create_folder(title, parent_id, description, icon)
+
+    def get_folder_tree(self, folder_id: Optional[str] = None, max_depth: int = -1) -> Dict[str, Any]:
+        """Get a tree representation of folders."""
+        return self.content_manager.get_folder_tree(folder_id, max_depth)
+
+    def list_folder_contents(self, folder_id: str) -> List[Dict[str, Any]]:
+        """List contents of a folder."""
+        return self.content_manager.list_folder_contents(folder_id)
+
+    def move_content_to_folder(self, content_id: str, folder_id: str) -> Dict[str, Any]:
+        """Move content into a different folder."""
+        return self.content_manager.move_content_to_folder(content_id, folder_id)
+
+    # Relationship helpers
+    def create_relationship(self, source_id: str, target_id: str, relationship_type: Union[RelationshipType, str] = RelationshipType.RELATED, description: str = "", metadata: Optional[Dict[str, Any]] = None):
+        """Create a relationship between two content items."""
+        return self.content_manager.create_relationship(source_id, target_id, relationship_type, description, metadata)
+
+    def get_related_content(self, content_id: str, relationship_type: Optional[Union[RelationshipType, str]] = None, include_content: bool = False):
+        """Fetch content related to the given item."""
+        return self.content_manager.get_related_content(content_id, relationship_type, include_content)
+
+    def delete_relationship(self, source_id: str, target_id: str) -> bool:
+        """Delete a relationship between two content items."""
+        return self.relationship_manager.delete_relationship(source_id, target_id)
+
+    # Semantic search
+    def search_semantic(self, query: str, top_k: int = 10, content_types: Optional[List[str]] = None, categories: Optional[List[str]] = None, tags: Optional[List[str]] = None, min_similarity: float = 0.0):
+        """Perform a semantic search across the knowledge base."""
+        return self.semantic_search_engine.search(query, top_k, content_types, categories, tags, min_similarity)
+
+    def similar_content(self, content_id: str, top_k: int = 5, min_similarity: float = 0.7):
+        """Find content similar to the specified item."""
+        return self.semantic_search_engine.similar_content(content_id, top_k, min_similarity)
+
+    # Recommendations
+    def get_recommendations(self, content_id: str, max_items: int = 5):
+        """Get recommended content items related to the specified item."""
+        return self.recommendation_engine.get_related_items(content_id, max_items)
+
+    def get_contextual_suggestions(self, current_context: Dict[str, Any], max_items: int = 3):
+        """Get contextual content suggestions based on current user context."""
+        return self.recommendation_engine.get_contextual_suggestions(current_context, max_items)
+
+    # Knowledge Graph
+    def build_knowledge_graph(self, root_ids: Optional[List[str]] = None, max_depth: int = 2, relationship_types: Optional[List[Union[RelationshipType, str]]] = None):
+        """Build a graph representation of content relationships."""
+        return self.knowledge_graph.build_graph(root_ids, max_depth, relationship_types) 

@@ -1,16 +1,27 @@
 # Knowledge Base System with Integrated Privacy
 
-A unified system that combines intelligent knowledge management with built-in privacy protection.
+A unified system that combines intelligent knowledge management with built-in privacy protection and advanced content organization.
 
 ## 👋 Welcome!
 
 This system provides a secure way to manage your knowledge while protecting privacy through intelligent tokenization. The project integrates:
 
-1. **Knowledge Base Manager**: Organizes and processes your notes, todos, events, and other content
+1. **Knowledge Base Manager**: Organizes and processes your notes, todos, events, and other content with hierarchical organization
 2. **Privacy Layer**: Ensures your data remains private through smart anonymization
 3. **Token Intelligence**: Generates insights from privacy tokens without accessing original data
+4. **Hierarchical Organization**: Organize content in folders with parent-child relationships
+5. **Relationship Management**: Create explicit connections between content items
+6. **Semantic Search**: Find content based on meaning, not just keywords
+7. **Smart Recommendations**: Get contextual suggestions based on relationships and content similarity
 
 ## ✨ Key Features
+
+### Advanced Content Organization
+- **Hierarchical Folder Structure**: Organize content in folders with unlimited nesting
+- **Explicit Relationships**: Define connections between content items (references, dependencies, continuations)
+- **Semantic Search**: Find content based on meaning using vector embeddings
+- **Smart Recommendations**: Get suggestions based on relationships, similarity, and user behavior
+- **Knowledge Graph**: Visualize connections between your content items
 
 ### Privacy-First Design
 - **Smart Anonymization**: Preserves essential information while protecting personal identifiers
@@ -24,9 +35,9 @@ This system provides a secure way to manage your knowledge while protecting priv
 - **Personalized Intelligence**: Learns from usage patterns while maintaining privacy
 
 ### Rich Capabilities  
-- **Multiple Content Types**: Notes, tasks, calendar events, projects, and more
+- **Multiple Content Types**: Notes, tasks, calendar events, projects, references, and folders
 - **Search & Discovery**: Find connections across your knowledge base
-- **API Integration**: Connect with other tools through a clean REST API
+- **API Integration**: Connect with other tools through a comprehensive REST API
 - **Conversational Interface**: Chat naturally with your knowledge base
 
 ### Quality & Reliability
@@ -53,10 +64,49 @@ pip install -e .
 
 ```python
 from knowledge_base import KnowledgeBaseManager
+from knowledge_base.content_types import RelationshipType
 
 # Initialize the integrated knowledge base
 kb = KnowledgeBaseManager()
 
+# Create a folder structure
+work_folder = kb.create_folder("Work Projects")
+project_folder = kb.create_folder("Project Phoenix", parent_id=work_folder["id"])
+
+# Create content in folders
+project = kb.create_content({
+    "title": "Project Phoenix",
+    "description": "Main project initiative",
+    "category": "work"
+}, "project", parent_id=project_folder["id"])
+
+task = kb.create_content({
+    "title": "Create timeline",
+    "description": "Develop project timeline",
+    "priority": "high"
+}, "todo", parent_id=project_folder["id"])
+
+# Create relationships between content
+kb.create_relationship(
+    project["id"], 
+    task["id"], 
+    RelationshipType.DEPENDENCY,
+    "Project task"
+)
+
+# Semantic search
+results = kb.search_semantic("project planning and timelines")
+
+# Get recommendations
+recommendations = kb.get_recommendations(project["id"])
+
+# Build knowledge graph
+graph = kb.build_knowledge_graph([project["id"]])
+```
+
+### Privacy Example
+
+```python
 # Create a privacy session
 session_id = kb.session_manager.create_session("balanced")
 
@@ -66,11 +116,6 @@ result = kb.process_with_privacy(
     session_id=session_id
 )
 
-# See what was extracted
-print(f"Found {len(result['extracted_info']['todos'])} todos")
-print(f"Found {len(result['extracted_info']['calendar_events'])} events")
-print(f"Privacy-safe text: {result['original_content']}")
-
 # Process and get AI response
 response = kb.process_and_respond(
     "Call John tomorrow about the project status.",
@@ -78,12 +123,11 @@ response = kb.process_and_respond(
 )
 
 print(f"AI Response: {response['response']['message']}")
-print(f"Suggestions: {[s['text'] for s in response['response']['suggestions']]}")
 ```
 
 ## 🔄 System Architecture
 
-The system is designed with privacy built into every component:
+The system is designed with privacy built into every component and enhanced with hierarchical organization:
 
 ```mermaid
 graph TD
@@ -97,12 +141,33 @@ graph TD
     C -->|Enhanced Content| F[AI Response Generator]
     F -->|Anonymized Response| B
     B -->|De-anonymized Response| A
+
+    %% New components and flows
+    C -->|Content Management| G[Content Manager]
+    C -->|Hierarchical Organization| H[Hierarchy Manager]
+    C -->|Relationship Management| I[Relationship Manager]
+    C -->|Semantic Search| J[Semantic Search Engine]
+    C -->|Recommendations| K[Recommendation Engine]
+    C -->|Graph Visualization| L[Knowledge Graph]
+    
+    G -->|Content Items| D
+    H -->|Folder Structure| D
+    I -->|Content Relationships| D
+    J -->|Search Results| C
+    K -->|Content Suggestions| C
+    L -->|Graph Data| C
     
     subgraph "Knowledge System"
     C
     D
     E
     F
+    G
+    H
+    I
+    J
+    K
+    L
     end
     
     subgraph "Privacy Layer"
@@ -110,16 +175,22 @@ graph TD
     end
 ```
 
-This flow ensures that:
+This enhanced flow ensures that:
 1. User input is properly anonymized
 2. Processing happens with privacy tokens (never the original data)
-3. Responses are automatically de-anonymized before being shown to users
+3. Content is organized hierarchically with explicit relationships
+4. Semantic search and recommendations enhance discoverability
+5. Responses are automatically de-anonymized before being shown to users
 
+**Core Components:**
 - **Privacy Engine**: Smart anonymization of sensitive information
 - **Knowledge Base**: Manages content organization and processing
+- **Hierarchy Manager**: Folder structures and content navigation
+- **Relationship Manager**: Explicit connections between content items
+- **Semantic Search**: Vector-based content similarity and search
+- **Recommendation Engine**: Context-aware content suggestions
+- **Knowledge Graph**: Visualization of content relationships
 - **Token Intelligence**: Provides privacy-safe insights from tokens
-- **Content Store**: Securely stores all your knowledge
-- **Response Generator**: Creates helpful responses and suggestions
 
 ## 📚 Documentation
 
@@ -252,43 +323,57 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Latest Improvements
 
-### Milestone 1 Completion
+### Milestone 2 Completion (v1.2.0) - June 2025
 
-We're excited to announce the completion of Milestone 1, which includes:
+We're excited to announce the completion of Milestone 2, which includes major enhancements to content organization:
 
-### Error Handling Framework
+#### Hierarchical Organization
+- **Folder Structure**: Create unlimited nested folders to organize your content
+- **Path Navigation**: Each content item has a clear path in the hierarchy
+- **Content Movement**: Easily move content between folders
+- **Tree Views**: Get comprehensive folder tree representations
 
+#### Relationship Management
+- **Explicit Relationships**: Define connections between content items
+- **Relationship Types**: Support for references, dependencies, continuations, and more
+- **Bidirectional Tracking**: Relationships are maintained in both directions
+- **Relationship Metadata**: Add descriptions and context to relationships
+
+#### Semantic Search & Recommendations
+- **Vector Embeddings**: Content represented as semantic vectors for similarity matching
+- **Natural Language Search**: Find content based on meaning, not just keywords
+- **Smart Recommendations**: Get suggestions based on relationships and semantic similarity
+- **Contextual Suggestions**: Recommendations adapt to your current activity
+
+#### Knowledge Graph
+- **Graph Visualization**: See your content as an interconnected network
+- **Path Discovery**: Find connections between seemingly unrelated content
+- **Cluster Detection**: Identify groups of related content
+- **Interactive Exploration**: Navigate through your knowledge visually
+
+### Previous Milestone 1 Achievements
+
+#### Error Handling Framework
 - Comprehensive exception hierarchy with specialized types
 - Consistent error handling patterns throughout codebase
 - Graceful degradation strategies for non-critical failures
 - Detailed logging with context for improved debugging
 
-### Circuit Breaker Pattern
-
+#### Circuit Breaker Pattern
 - Fault tolerance using the circuit breaker pattern
 - Protection for critical system components
 - Automatic recovery mechanisms for transient failures
 - Configurable thresholds and timeouts
 - Metrics collection for monitoring
 
-### Test Coverage Improvements
-
+#### Test Coverage Improvements
 - Increased overall coverage from 72% to 91%
 - Privacy components now at 94% coverage
 - Core components at 89% coverage
-- Utility functions at 95% coverage
 - Added parameterized tests for comprehensive case coverage
 
-### Performance Optimizations
-
+#### Performance Optimizations
 - Pre-compiled regex patterns for faster matching
 - Batch processing for improved throughput
 - Optimized token processing for better performance
 - Client-side caching for frequently accessed data
-
-### Legacy Code Migration
-
-- Completed migration from monolithic privacy.py to modern components
-- Improved modularity and separation of concerns
-- Enhanced testability and maintainability
-- Adapter pattern for backward compatibility

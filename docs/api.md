@@ -277,6 +277,483 @@ Process content with privacy and generate intelligent response.
 }
 ```
 
+### Hierarchical Organization & Relationships
+
+#### Create Folder
+
+**POST /folders**
+
+Create a new folder in the hierarchy.
+
+**Request Body**
+```json
+{
+  "title": "Work Projects",
+  "parent_id": "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+  "description": "Collection of work-related projects",
+  "icon": "folder-work"
+}
+```
+
+**Response**
+```json
+{
+  "id": "7f8e9d6c-5b4a-3f2e-1d0c-9b8a7f6e5d4c",
+  "title": "Work Projects",
+  "description": "Collection of work-related projects",
+  "icon": "folder-work",
+  "parent_id": "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+  "path": "/Root Folder/Work Projects",
+  "created": "2025-06-26T14:30:45.123456+00:00",
+  "last_modified": "2025-06-26T14:30:45.123456+00:00",
+  "children": []
+}
+```
+
+#### Get Folder Contents
+
+**GET /folders/{folder_id}/contents**
+
+Retrieve the contents of a folder.
+
+**Response**
+```json
+{
+  "folder": {
+    "id": "7f8e9d6c-5b4a-3f2e-1d0c-9b8a7f6e5d4c",
+    "title": "Work Projects",
+    "description": "Collection of work-related projects",
+    "path": "/Root Folder/Work Projects",
+    "parent_id": "1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d"
+  },
+  "contents": [
+    {
+      "id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+      "title": "Project Phoenix",
+      "content_type": "project",
+      "last_modified": "2025-06-26T14:35:22.123456+00:00"
+    },
+    {
+      "id": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+      "title": "Website Redesign",
+      "content_type": "project",
+      "last_modified": "2025-06-26T14:36:10.123456+00:00"
+    }
+  ]
+}
+```
+
+#### Get Folder Tree
+
+**GET /folders/tree**
+
+Retrieve the folder hierarchy tree.
+
+**Query Parameters**
+```
+root_id: Optional ID of the root folder (default: system root)
+max_depth: Maximum depth to retrieve (default: -1 for unlimited)
+```
+
+**Response**
+```json
+{
+  "id": "root-folder-id",
+  "title": "Root Folder",
+  "path": "/",
+  "type": "folder",
+  "children": [
+    {
+      "id": "7f8e9d6c-5b4a-3f2e-1d0c-9b8a7f6e5d4c",
+      "title": "Work Projects",
+      "path": "/Work Projects",
+      "type": "folder",
+      "children": [
+        {
+          "id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+          "title": "Project Phoenix",
+          "path": "/Work Projects/Project Phoenix",
+          "type": "content"
+        },
+        {
+          "id": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+          "title": "Website Redesign",
+          "path": "/Work Projects/Website Redesign",
+          "type": "content"
+        }
+      ]
+    },
+    {
+      "id": "personal-folder-id",
+      "title": "Personal",
+      "path": "/Personal",
+      "type": "folder",
+      "children": []
+    }
+  ]
+}
+```
+
+#### Move Content
+
+**POST /content/{content_id}/move**
+
+Move content to a different folder.
+
+**Request Body**
+```json
+{
+  "destination_folder_id": "7f8e9d6c-5b4a-3f2e-1d0c-9b8a7f6e5d4c"
+}
+```
+
+**Response**
+```json
+{
+  "id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+  "title": "Project Notes",
+  "content_type": "note",
+  "parent_id": "7f8e9d6c-5b4a-3f2e-1d0c-9b8a7f6e5d4c",
+  "path": "/Work Projects/Project Notes",
+  "message": "Content moved successfully"
+}
+```
+
+#### Create Relationship
+
+**POST /relationships**
+
+Create a relationship between two content items.
+
+**Request Body**
+```json
+{
+  "source_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+  "target_id": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+  "relationship_type": "REFERENCE",
+  "description": "Meeting notes reference the project document"
+}
+```
+
+**Response**
+```json
+{
+  "source_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+  "target_id": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+  "relationship_type": "REFERENCE",
+  "description": "Meeting notes reference the project document",
+  "created": "2025-06-26T14:42:15.123456+00:00"
+}
+```
+
+#### Get Related Content
+
+**GET /content/{content_id}/related**
+
+Get content related to a specific item.
+
+**Query Parameters**
+```
+relationship_type: Optional filter by relationship type
+include_content: Whether to include full content data (default: false)
+```
+
+**Response**
+```json
+{
+  "content_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+  "title": "Project Phoenix",
+  "related_items": [
+    {
+      "content_id": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+      "relationship": {
+        "source_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+        "target_id": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+        "relationship_type": "DEPENDENCY",
+        "description": "Project task"
+      },
+      "content": {
+        "id": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+        "title": "Create project timeline",
+        "content_type": "todo",
+        "status": "active"
+      }
+    },
+    {
+      "content_id": "c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f",
+      "relationship": {
+        "source_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+        "target_id": "c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f",
+        "relationship_type": "REFERENCE",
+        "description": "Project documentation"
+      },
+      "content": {
+        "id": "c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f",
+        "title": "Meeting Notes",
+        "content_type": "note"
+      }
+    }
+  ]
+}
+```
+
+#### Delete Relationship
+
+**DELETE /relationships/{source_id}/{target_id}**
+
+Delete a relationship between two content items.
+
+**Response**
+```json
+{
+  "status": "success",
+  "message": "Relationship deleted successfully"
+}
+```
+
+### Semantic Search & Recommendations
+
+#### Semantic Search
+
+**POST /semantic-search**
+
+Search content semantically using natural language.
+
+**Request Body**
+```json
+{
+  "query": "artificial intelligence and machine learning",
+  "top_k": 5,
+  "content_types": ["note", "project"],
+  "min_similarity": 0.7
+}
+```
+
+**Response**
+```json
+{
+  "query": "artificial intelligence and machine learning",
+  "results": [
+    {
+      "content_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+      "similarity": 0.92,
+      "content": {
+        "id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+        "title": "AI Research Notes",
+        "content": "Notes on recent advancements in artificial intelligence and machine learning techniques.",
+        "content_type": "note",
+        "category": "research",
+        "tags": ["AI", "research", "deep learning"]
+      }
+    },
+    {
+      "content_id": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+      "similarity": 0.85,
+      "content": {
+        "id": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+        "title": "Machine Learning Project",
+        "description": "A project focused on neural networks and deep learning algorithms.",
+        "content_type": "project",
+        "category": "tech",
+        "tags": ["AI", "machine learning", "neural networks"]
+      }
+    }
+  ]
+}
+```
+
+#### Similar Content
+
+**GET /content/{content_id}/similar**
+
+Find content similar to a specific item.
+
+**Query Parameters**
+```
+top_k: Maximum number of results to return (default: 5)
+min_similarity: Minimum similarity threshold (default: 0.7)
+```
+
+**Response**
+```json
+{
+  "content_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+  "similar_items": [
+    {
+      "content_id": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+      "similarity": 0.88,
+      "content": {
+        "id": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+        "title": "Machine Learning Project",
+        "content_type": "project"
+      }
+    },
+    {
+      "content_id": "c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f",
+      "similarity": 0.76,
+      "content": {
+        "id": "c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f",
+        "title": "Deep Learning Techniques",
+        "content_type": "note"
+      }
+    }
+  ]
+}
+```
+
+#### Get Recommendations
+
+**GET /content/{content_id}/recommendations**
+
+Get recommendations for a specific content item.
+
+**Query Parameters**
+```
+max_items: Maximum number of recommendations to return (default: 5)
+```
+
+**Response**
+```json
+{
+  "content_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+  "recommendations": [
+    {
+      "content_id": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+      "score": 0.92,
+      "reason": "Referenced content",
+      "content": {
+        "id": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+        "title": "Meeting Notes",
+        "content_type": "note"
+      }
+    },
+    {
+      "content_id": "c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f",
+      "score": 0.85,
+      "reason": "Semantically similar (0.85)",
+      "content": {
+        "id": "c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f",
+        "title": "Project Timeline",
+        "content_type": "todo"
+      }
+    }
+  ]
+}
+```
+
+#### Get Contextual Suggestions
+
+**POST /contextual-suggestions**
+
+Get contextual suggestions based on user activity.
+
+**Request Body**
+```json
+{
+  "content_id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+  "text": "I'm writing about knowledge management systems and methodologies.",
+  "max_items": 3
+}
+```
+
+**Response**
+```json
+{
+  "suggestions": [
+    {
+      "content_id": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+      "score": 0.88,
+      "reason": "Relevant to current context (0.88)",
+      "content": {
+        "id": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+        "title": "Knowledge Graph Systems",
+        "content_type": "note"
+      }
+    },
+    {
+      "content_id": "c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f",
+      "score": 0.82,
+      "reason": "Referenced in current document",
+      "content": {
+        "id": "c3d4e5f6-a7b8-9c0d-1e2f-3a4b5c6d7e8f",
+        "title": "Methodology Comparison",
+        "content_type": "note"
+      }
+    }
+  ]
+}
+```
+
+#### Knowledge Graph
+
+**GET /knowledge-graph**
+
+Generate a knowledge graph for visualization.
+
+**Query Parameters**
+```
+root_ids: Comma-separated list of content IDs to use as roots
+max_depth: Maximum depth to traverse (default: 2)
+include_hierarchy: Whether to include hierarchical relationships (default: true)
+```
+
+**Response**
+```json
+{
+  "graph": {
+    "nodes": [
+      {
+        "id": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+        "label": "Project Phoenix",
+        "type": "project",
+        "data": {
+          "path": "/Work/Projects/Project Phoenix",
+          "category": "work",
+          "tags": ["project", "important"]
+        }
+      },
+      {
+        "id": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+        "label": "Create project timeline",
+        "type": "todo",
+        "data": {
+          "path": "/Work/Tasks/Create project timeline",
+          "category": "task",
+          "tags": ["project", "planning"]
+        }
+      }
+    ],
+    "edges": [
+      {
+        "source": "a1b2c3d4-e5f6-7a8b-9c0d-1e2f3a4b5c6d",
+        "target": "b2c3d4e5-f6a7-8b9c-0d1e-2f3a4b5c6d7e",
+        "label": "DEPENDENCY",
+        "data": {
+          "description": "Project task",
+          "type": "DEPENDENCY",
+          "created": "2025-06-26T14:30:15.123456+00:00"
+        }
+      }
+    ]
+  },
+  "statistics": {
+    "node_count": 2,
+    "edge_count": 1,
+    "node_type_counts": {
+      "project": 1,
+      "todo": 1
+    },
+    "edge_type_counts": {
+      "DEPENDENCY": 1
+    }
+  },
+  "config": {
+    "directed": true,
+    "hierarchical": true
+  }
+}
+```
+
 ## Error Responses
 
 **Validation Error**

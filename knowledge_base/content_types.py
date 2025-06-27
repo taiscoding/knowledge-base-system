@@ -4,9 +4,10 @@ Defines the different types of content that can be stored in the knowledge base.
 """
 
 from dataclasses import dataclass, asdict, field
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Set
 from datetime import datetime, timezone
 import uuid
+from enum import Enum
 
 
 def generate_id() -> str:
@@ -17,6 +18,33 @@ def generate_id() -> str:
 def get_timestamp() -> str:
     """Get current timestamp in ISO format."""
     return datetime.now(timezone.utc).isoformat()
+
+
+class RelationshipType(Enum):
+    """Types of relationships between content items."""
+    PARENT_CHILD = "parent_child"  # Hierarchical relationship
+    REFERENCE = "reference"         # One content references another
+    DEPENDENCY = "dependency"       # One content depends on another
+    CONTINUATION = "continuation"   # One content continues from another
+    RELATED = "related"             # General relationship (default)
+
+
+@dataclass
+class Relationship:
+    """Represents a relationship between two content items."""
+    source_id: str
+    target_id: str
+    relationship_type: RelationshipType = RelationshipType.RELATED
+    description: str = ""
+    created: str = field(default_factory=get_timestamp)
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary."""
+        result = asdict(self)
+        # Convert enum to string
+        result["relationship_type"] = self.relationship_type.value
+        return result
 
 
 @dataclass
@@ -33,9 +61,22 @@ class BaseContent:
     created: str = field(default_factory=get_timestamp)
     last_modified: str = field(default_factory=get_timestamp)
     
+    # Hierarchical organization
+    parent_id: Optional[str] = None  # ID of the parent content item (if any)
+    path: Optional[str] = None       # Full path in the hierarchy (e.g., /work/projects/project1)
+    
+    # Relationship management
+    relationships: List[str] = field(default_factory=list)  # List of relationship IDs
+    
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return asdict(self)
+
+    def add_relationship(self, relationship_id: str) -> None:
+        """Add a relationship to this content."""
+        if relationship_id not in self.relationships:
+            self.relationships.append(relationship_id)
+            self.last_modified = get_timestamp()
 
 
 @dataclass
@@ -121,4 +162,31 @@ class Reference(BaseContent):
     citation: Optional[str] = None
     content_type: str = field(default="reference")
     description: str = ""
-    notes: str = "" 
+    notes: str = ""
+
+
+@dataclass
+class Folder(BaseContent):
+    """
+    A folder in the knowledge base hierarchy.
+    
+    Folders are used to organize content in a hierarchical structure.
+    They can contain other folders and content items.
+    """
+    
+    description: str = ""
+    icon: str = "folder"  # Used for UI representation
+    content_type: str = field(default="folder")
+    children: List[str] = field(default_factory=list)  # IDs of child content items
+    
+    def add_child(self, child_id: str) -> None:
+        """Add a child to this folder."""
+        if child_id not in self.children:
+            self.children.append(child_id)
+            self.last_modified = get_timestamp()
+    
+    def remove_child(self, child_id: str) -> None:
+        """Remove a child from this folder."""
+        if child_id in self.children:
+            self.children.remove(child_id)
+            self.last_modified = get_timestamp() 

@@ -16,6 +16,8 @@ The Knowledge Base System is designed with a modular architecture that separates
    - Central orchestrator for the system
    - Manages content processing, storage, and retrieval
    - Coordinates between privacy, storage, and intelligence components
+   - Provides hierarchical organization and relationship management
+   - Integrates semantic search and recommendation capabilities
 
 2. **Privacy Engine** (`knowledge_base/privacy/`)
    - Handles sensitive information tokenization and detokenization
@@ -37,6 +39,31 @@ The Knowledge Base System is designed with a modular architecture that separates
    - Analyzes and processes privacy tokens
    - Generates intelligence insights from relationships
    - Provides contextual token understanding
+
+6. **Hierarchy Management** (`knowledge_base/core/hierarchy_manager.py`)
+   - Manages folder structures and content hierarchy
+   - Provides navigation through folder trees
+   - Maintains parent-child relationships between content items
+
+7. **Relationship Management** (`knowledge_base/core/relationship_manager.py`)
+   - Handles explicit relationships between content items
+   - Supports different relationship types (reference, dependency, etc.)
+   - Maintains relationship metadata and descriptions
+   
+8. **Semantic Search** (`knowledge_base/core/semantic_search.py`)
+   - Implements vector embeddings for content similarity
+   - Provides semantic search capabilities across content
+   - Supports filtering by content type, category, and tags
+   
+9. **Recommendation Engine** (`knowledge_base/core/recommendation_engine.py`)
+   - Provides content recommendations based on relationships and similarity
+   - Tracks user interactions for improved recommendations
+   - Generates contextual suggestions based on current user activity
+   
+10. **Knowledge Graph** (`knowledge_base/core/knowledge_graph.py`)
+    - Builds graph representations of content relationships
+    - Provides visualization data for content networks
+    - Supports path finding between content items
 
 ### Supporting Components
 
@@ -285,13 +312,24 @@ The system consists of two main components with integrated privacy features:
 │             │  - CalendarEvent      │  - TokenBridge  │
 │  Utils      │  - Project            │                 │
 │             │  - Reference          │                 │
-└─────────────┴───────────────────────┴─────────────────┘
+│             │  - Folder             │                 │
+├─────────────┴───────────────────────┴─────────────────┤
+│                                                       │
+│                   Core Components                     │
+│  - Hierarchy Manager                                  │
+│  - Relationship Manager                               │
+│  - Content Manager                                    │
+│  - Knowledge Graph                                    │
+│  - Semantic Search                                    │
+│  - Recommendation Engine                              │
+└───────────────────────────────────────────────────────┘
 ```
 
 - **Manager**: Core class that handles content processing and organization
-- **Content Types**: Data classes for different types of content
+- **Content Types**: Data classes for different types of content, including the new Folder type
 - **Utils**: Configuration, helpers, and utility functions
 - **Privacy**: Integrated privacy components for anonymization and session management
+- **Core**: New components for hierarchical organization, relationships, and semantic capabilities
 
 ### Token Intelligence System
 
@@ -330,12 +368,33 @@ graph TD
     C -->|Enhanced Content| F[AI Response Generator]
     F -->|Anonymized Response| B
     B -->|De-anonymized Response| A
+
+    %% New components and flows
+    C -->|Content Management| G[Content Manager]
+    C -->|Hierarchical Organization| H[Hierarchy Manager]
+    C -->|Relationship Management| I[Relationship Manager]
+    C -->|Semantic Search| J[Semantic Search Engine]
+    C -->|Recommendations| K[Recommendation Engine]
+    C -->|Graph Visualization| L[Knowledge Graph]
+    
+    G -->|Content Items| D
+    H -->|Folder Structure| D
+    I -->|Content Relationships| D
+    J -->|Search Results| C
+    K -->|Content Suggestions| C
+    L -->|Graph Data| C
     
     subgraph "Knowledge System"
     C
     D
     E
     F
+    G
+    H
+    I
+    J
+    K
+    L
     end
     
     subgraph "Privacy Layer"
@@ -350,7 +409,10 @@ The detailed flow through the system:
 3. Knowledge Base processes and organizes tokenized content
 4. Token Intelligence analyzes tokens and generates insights without seeing original data
 5. Knowledge Base enhances content with token intelligence
-6. Knowledge Base de-tokenizes content before returning to user
+6. Knowledge Base organizes content in hierarchical folder structure
+7. Knowledge Base manages relationships between content items
+8. Knowledge Base provides semantic search and recommendations
+9. Knowledge Base de-tokenizes content before returning to user
 
 ## Privacy Architecture
 
@@ -792,3 +854,79 @@ The system includes monitoring capabilities:
 - Error rate tracking
 - Circuit breaker state monitoring
 - Health checks 
+
+## Hierarchical Organization
+
+### Folder Structure
+
+The system now implements a hierarchical organization model where content can be organized in folders:
+
+```
+┌───────────────┐
+│  Root Folder  │
+└───────┬───────┘
+        │
+    ┌───┴────────────────┐
+    │                    │
+┌───▼───┐           ┌────▼────┐
+│ Work  │           │ Personal│
+└───┬───┘           └────┬────┘
+    │                    │
+┌───▼───┐           ┌────▼────┐
+│Project│           │  Notes  │
+└───────┘           └─────────┘
+```
+
+### Content Paths
+
+Each content item can have a path in the hierarchy:
+
+- `/Work/Projects/Project Phoenix`
+- `/Personal/Notes/Vacation Ideas`
+
+### Relationship Types
+
+The system supports several relationship types between content items:
+
+1. **PARENT_CHILD**: Hierarchical relationship (folder containment)
+2. **REFERENCE**: One content references another
+3. **DEPENDENCY**: One content depends on another
+4. **CONTINUATION**: One content continues from another
+5. **RELATED**: General relationship between content items
+
+### Knowledge Graph Features
+
+The Knowledge Graph component provides:
+
+1. **Node & Edge Representation**: Content items and their relationships
+2. **Path Finding**: Discovering connections between content items
+3. **Cluster Detection**: Finding related groups of content
+4. **Visualization Data**: Generating data for graph visualizations
+
+## Semantic Features
+
+### Vector Embeddings
+
+Content is represented as vector embeddings to enable similarity-based operations:
+
+1. **Content Embeddings**: Generated from content text and metadata
+2. **Similarity Calculation**: Using cosine similarity between vectors
+3. **Efficient Storage**: For fast retrieval and comparison
+
+### Recommendation Types
+
+The recommendation engine provides several types of recommendations:
+
+1. **Relationship-based**: Based on explicit relationships
+2. **Semantic Similarity**: Based on content similarity
+3. **User Interaction**: Based on user viewing and editing patterns
+4. **Contextual Suggestions**: Based on current user activity
+
+### Integration with UI
+
+This backend architecture supports rich user interfaces with:
+
+1. **Folder Navigation**: Browsing through hierarchical content structure
+2. **Relationship Visualization**: Viewing relationships between content items
+3. **Recommendations Panel**: Displaying relevant content suggestions
+4. **Semantic Search Interface**: Searching by meaning rather than keywords 
