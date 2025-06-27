@@ -1,10 +1,10 @@
 # Knowledge Base System Architecture
 
-*Last updated: June 27, 2025*
+*Last updated: December 28, 2025*
 
 ## Overview
 
-The Knowledge Base System is designed with a modular architecture that separates concerns and enables flexibility. This document describes the high-level architecture, components, data flow, and design patterns used throughout the system.
+The Knowledge Base System is designed with a modular architecture that separates concerns and enables flexibility. This document describes the high-level architecture, components, data flow, and design patterns used throughout the system, with special focus on the enhanced privacy features introduced in v1.3.0.
 
 ## System Components
 
@@ -12,28 +12,37 @@ The Knowledge Base System is designed with a modular architecture that separates
 
 ### Core Components
 
-1. **Knowledge Base Manager** (`knowledge_base/manager.py`)
-   - Central orchestrator for the system
-   - Manages content processing, storage, and retrieval
+1. **Enhanced Knowledge Base Manager** (`knowledge_base/manager.py`)
+   - Central orchestrator for the system with integrated privacy enhancements
+   - Manages content processing, storage, and retrieval with encryption support
    - Coordinates between privacy, storage, and intelligence components
    - Provides hierarchical organization and relationship management
    - Integrates semantic search and recommendation capabilities
+   - **NEW v1.3.0**: Enhanced with 9 privacy-aware methods and comprehensive audit logging
 
-2. **Privacy Engine** (`knowledge_base/privacy/`)
+2. **Enhanced Privacy Engine** (`knowledge_base/privacy/`)
    - Handles sensitive information tokenization and detokenization
    - Manages privacy sessions and token mappings
    - Implements smart anonymization for contextual privacy preservation
    - Features circuit breaker pattern for fault tolerance
+   - **NEW v1.3.0**: Enhanced with five new privacy modules:
+     - **End-to-End Encryption** (`encryption.py`)
+     - **Granular Privacy Controls** (`privacy_controls.py`)
+     - **Privacy Audit Logging** (`audit_logging.py`)
+     - **Differential Privacy** (`differential_privacy.py`)
+     - **Privacy Certification Framework** (`certification.py`)
 
 3. **Storage System** (`knowledge_base/storage/`)
    - File-based storage for different content types
    - Handles data persistence and retrieval
    - Implements versioning and backup mechanisms
+   - **NEW v1.3.0**: Enhanced with encrypted storage adapter for transparent encryption
 
 4. **Search Engine** (`search/search_index.py`)
    - Provides full-text search capabilities
    - Creates and maintains search indices
    - Supports tags, content types, and relevance filtering
+   - **NEW v1.3.0**: Enhanced with searchable encryption support
 
 5. **Token Intelligence** (`token_intelligence/`)
    - Analyzes and processes privacy tokens
@@ -44,6 +53,7 @@ The Knowledge Base System is designed with a modular architecture that separates
    - Manages folder structures and content hierarchy
    - Provides navigation through folder trees
    - Maintains parent-child relationships between content items
+   - **NEW v1.3.0**: Enhanced with privacy inheritance support
 
 7. **Relationship Management** (`knowledge_base/core/relationship_manager.py`)
    - Handles explicit relationships between content items
@@ -65,46 +75,150 @@ The Knowledge Base System is designed with a modular architecture that separates
     - Provides visualization data for content networks
     - Supports path finding between content items
 
+### New Privacy Components (v1.3.0)
+
+11. **End-to-End Encryption** (`knowledge_base/privacy/encryption.py`)
+    - **KeyManager**: Secure key generation, storage, and rotation with master key protection
+    - **ContentEncryptionManager**: AES-GCM and Fernet encryption for content protection
+    - **EncryptedStorageAdapter**: Transparent file encryption with metadata protection
+    - **Searchable Encryption**: Preserves query capabilities while maintaining security
+
+12. **Granular Privacy Controls** (`knowledge_base/privacy/privacy_controls.py`)
+    - **PrivacyLevel Enum**: Four-tier privacy levels (PUBLIC, PROTECTED, PRIVATE, RESTRICTED)
+    - **PrivacyRuleEngine**: Evaluates content against privacy rules
+    - **PrivacyControlManager**: Manages privacy profiles and inheritance
+    - **Content-Specific Profiles**: Tailored privacy rules for different content types
+
+13. **Privacy Audit Logging** (`knowledge_base/privacy/audit_logging.py`)
+    - **PrivacyAuditLogger**: Tamper-evident logging using HMAC
+    - **ComplianceReporter**: Generates access and operation reports
+    - **Log Rotation**: Automatic archiving and retention management
+    - **Integrity Verification**: Ensures audit trail authenticity
+
+14. **Differential Privacy** (`knowledge_base/privacy/differential_privacy.py`)
+    - **PrivacyBudgetManager**: Epsilon budget tracking and management
+    - **DifferentialPrivacyMechanism**: Multiple noise mechanisms (Laplace, Gaussian, Geometric)
+    - **PrivacyPreservingAnalytics**: Private statistics, histograms, and top-k queries
+    - **Budget Protection**: Prevents privacy budget exhaustion
+
+15. **Privacy Certification Framework** (`knowledge_base/privacy/certification.py`)
+    - **ComplianceChecker**: Multi-standard compliance verification (GDPR, CCPA, HIPAA, SOC2, ISO27001)
+    - **PrivacyImpactAssessmentTool**: Structured PIA workflow with risk assessment
+    - **CertificationReporter**: Comprehensive compliance reports and gap analysis
+
 ### Supporting Components
 
 1. **CLI Interface** (`knowledge_base/cli.py`)
    - Command-line interface for system interaction
    - Provides commands for content management and search
+   - **NEW v1.3.0**: Enhanced with privacy-aware commands
 
 2. **API Server** (`scripts/api_server.py`)
    - REST API for external integrations
    - Exposes system functionality via HTTP endpoints
+   - **NEW v1.3.0**: Enhanced with privacy compliance endpoints
 
 3. **Utilities** (`knowledge_base/utils/`)
    - Configuration management
    - Helper functions
    - Logging and error handling
 
-## Data Flow
+## Enhanced Data Flow (v1.3.0)
 
-1. **Content Ingestion Flow**
+1. **Enhanced Content Ingestion Flow**
    ```
-   Raw Content → KnowledgeBaseManager → Privacy Engine → Content Processing → Storage System
-                                                      ↓
-                                                Search Index
-   ```
-
-2. **Content Retrieval Flow**
-   ```
-   Query → KnowledgeBaseManager → Storage System → Privacy Engine → User Display
+   Raw Content → Enhanced KnowledgeBaseManager → Privacy Engine → Privacy Controls → Encryption → Content Processing → Encrypted Storage
+                                                               ↓                      ↓
+                                                        Audit Logger            Search Index
    ```
 
-3. **Search Flow**
+2. **Enhanced Content Retrieval Flow**
    ```
-   Search Query → KnowledgeBaseManager → Search Engine → Storage System → Privacy Engine → Results
+   Query → Enhanced KnowledgeBaseManager → Privacy Controls → Encrypted Storage → Decryption → Privacy Engine → User Display
+                                                        ↓
+                                                  Audit Logger
    ```
 
-4. **Token Intelligence Flow**
+3. **Enhanced Search Flow**
    ```
-   Content → Privacy Engine → Token Intelligence Engine → Token Analysis → Intelligence Storage
-                                                       ↓
-                                                 Knowledge Graph
+   Search Query → Enhanced KnowledgeBaseManager → Privacy Controls → Search Engine → Encrypted Storage → Decryption → Privacy Engine → Results
+                                               ↓
+                                         Audit Logger
    ```
+
+4. **Privacy-Preserving Analytics Flow**
+   ```
+   Analytics Request → Enhanced KnowledgeBaseManager → Differential Privacy Engine → Privacy Budget Check → Noisy Results
+                                                   ↓
+                                             Audit Logger
+   ```
+
+5. **Compliance Assessment Flow**
+   ```
+   Compliance Request → Enhanced KnowledgeBaseManager → Certification Framework → Evidence Collection → Gap Analysis → Compliance Report
+                                                    ↓
+                                              Audit Logger
+   ```
+
+## Enhanced Privacy Architecture
+
+### Privacy Component Organization
+
+```
+knowledge_base/privacy/
+├── __init__.py                         # Enhanced module exports
+├── encryption.py                       # End-to-end encryption (NEW v1.3.0)
+├── privacy_controls.py                 # Granular privacy controls (NEW v1.3.0)  
+├── audit_logging.py                    # Privacy audit logging (NEW v1.3.0)
+├── differential_privacy.py             # Differential privacy analytics (NEW v1.3.0)
+├── certification.py                    # Privacy certification framework (NEW v1.3.0)
+├── adapter.py                          # Privacy integration adapter
+├── circuit_breaker.py                  # Circuit breaker patterns
+├── session_manager.py                  # Privacy session management
+├── smart_anonymization.py              # Smart anonymization engine
+└── token_intelligence_bridge.py        # Token intelligence bridge
+```
+
+### Enhanced Privacy Data Flow
+
+```mermaid
+graph TD
+    A[User Content] -->|Tokenization| B[Privacy Engine]
+    B -->|Privacy Evaluation| C[Privacy Control Manager]
+    C -->|Encryption| D[Content Encryption Manager]
+    D -->|Audit Logging| E[Privacy Audit Logger]
+    E -->|Enhanced Content| F[Enhanced Knowledge Base Manager]
+    
+    F -->|Encrypted Storage| G[Encrypted Storage Adapter]
+    F -->|Privacy Analytics| H[Differential Privacy Engine]
+    F -->|Compliance Check| I[Certification Framework]
+    F -->|Privacy-Safe Tokens| J[Token Intelligence Bridge]
+    
+    J -->|Token Requests| K[Token Intelligence Engine]
+    K -->|Token Intelligence| J
+    J -->|Enhanced Content| F
+    
+    F -->|De-anonymized Response| A
+    
+    subgraph "Enhanced Privacy Layer v1.3.0"
+    B
+    C
+    D
+    E
+    H
+    I
+    end
+    
+    subgraph "Enhanced Knowledge Base v1.3.0"
+    F
+    G
+    end
+    
+    subgraph "Token Intelligence"
+    J
+    K
+    end
+```
 
 ## Error Handling & Fault Tolerance
 

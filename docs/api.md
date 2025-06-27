@@ -1,6 +1,6 @@
 # Knowledge Base API Documentation
 
-*Last updated: June 26, 2025*
+*Last updated: June 27, 2025*
 
 ## Overview
 

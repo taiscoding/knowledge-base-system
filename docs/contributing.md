@@ -1,6 +1,6 @@
 # Contributing to Knowledge Base System
 
-*Last updated: July 2025*
+*Last updated: June 2025*
 
 Thank you for your interest in contributing to the Knowledge Base System! This document provides guidelines for contributing code, documentation, and tests.
 

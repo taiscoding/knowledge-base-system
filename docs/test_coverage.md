@@ -1,6 +1,6 @@
 # Test Coverage Report
 
-*Last updated: July 2025*
+*Last updated: June 2025*
 
 This document summarizes the current status of test coverage for the Knowledge Base System.
 

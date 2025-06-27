@@ -1,5 +1,7 @@
 # Performance Optimization Guide
 
+*Last updated: June 2025*
+
 This document outlines the performance optimizations implemented for the Knowledge Base System's privacy components and provides guidance for future development.
 
 ## Performance Benchmark Results

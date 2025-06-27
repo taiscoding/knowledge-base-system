@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Knowledge Base Manager
-Main class for intelligent content processing and organization.
+Main class for intelligent content processing and organization with enhanced privacy.
 """
 
 import os
@@ -21,7 +21,23 @@ from knowledge_base.utils.helpers import (
     generate_id, get_timestamp, KnowledgeBaseError, ContentProcessingError,
     StorageError, ConfigurationError, PrivacyError, ValidationError, NotFoundError
 )
-from knowledge_base.privacy import PrivacyEngine, PrivacySessionManager, DeidentificationResult
+
+# Enhanced Privacy Imports (Milestone 3)
+from knowledge_base.privacy import (
+    # Legacy privacy components
+    PrivacyEngine, PrivacySessionManager, DeidentificationResult,
+    # End-to-End Encryption
+    KeyManager, ContentEncryptionManager, EncryptedStorageAdapter,
+    # Granular Privacy Controls  
+    PrivacyLevel, PrivacyControlManager, create_default_content_profiles,
+    # Privacy Audit Logging
+    PrivacyOperation, PrivacyImpact, PrivacyAuditLogger, ComplianceReporter,
+    # Differential Privacy
+    PrivacyPreservingAnalytics, BudgetExhaustedException,
+    # Privacy Certification Framework
+    ComplianceStandard, ComplianceChecker, PrivacyImpactAssessmentTool, CertificationReporter
+)
+
 from knowledge_base.core.content_manager import ContentManager
 from knowledge_base.core.relationship_manager import RelationshipManager
 from knowledge_base.core.hierarchy_manager import HierarchyManager
@@ -33,39 +49,51 @@ logger = logging.getLogger(__name__)
 
 class KnowledgeBaseManager:
     """
-    Main class for managing the knowledge base system.
+    Main class for managing the knowledge base system with enhanced privacy features.
     
     This class provides functionality for:
-    1. Processing and organizing content
-    2. Extracting actionable items (todos, events)
+    1. Processing and organizing content with privacy protection
+    2. Extracting actionable items (todos, events) with encryption
     3. Generating tags and categories automatically
-    4. Searching across content
-    5. Saving and retrieving content
+    4. Searching across content with privacy controls
+    5. Saving and retrieving content with audit logging
+    6. Privacy-preserving analytics and compliance certification
     """
     
-    def __init__(self, base_path: str = ".", privacy_storage_dir: str = None):
+    def __init__(self, base_path: str = ".", privacy_storage_dir: str = None, 
+                 enable_encryption: bool = True, enable_audit_logging: bool = True):
         """
-        Initialize the knowledge base manager.
+        Initialize the knowledge base manager with enhanced privacy.
         
         Args:
             base_path: Path to the knowledge base directory
             privacy_storage_dir: Path for storing privacy session data
+            enable_encryption: Whether to enable encryption features
+            enable_audit_logging: Whether to enable audit logging
         """
         try:
             self.base_path = Path(base_path)
             self.config = Config(self.base_path).load_config()
             self.conventions = Config(self.base_path).load_conventions()
             
-            # Initialize privacy components
-            self.privacy_engine = PrivacyEngine(self.config.get("privacy", {}))
-            self.session_manager = PrivacySessionManager(privacy_storage_dir)
-            # Integrate core managers for hierarchy, relationships, search, and recommendations
+            # Initialize core managers first
             self.relationship_manager = RelationshipManager(self.base_path)
             self.hierarchy_manager = HierarchyManager(self.base_path, relationship_manager=self.relationship_manager)
             self.content_manager = ContentManager(self.base_path, relationship_manager=self.relationship_manager, hierarchy_manager=self.hierarchy_manager)
             self.semantic_search_engine = SemanticSearch(self.base_path, content_manager=self.content_manager)
             self.recommendation_engine = RecommendationEngine(self.base_path, content_manager=self.content_manager, semantic_search=self.semantic_search_engine, relationship_manager=self.relationship_manager)
             self.knowledge_graph = KnowledgeGraph(self.base_path, content_manager=self.content_manager, relationship_manager=self.relationship_manager, hierarchy_manager=self.hierarchy_manager)
+            
+            # Initialize legacy privacy components
+            self.privacy_engine = PrivacyEngine(self.config.get("privacy", {}))
+            self.session_manager = PrivacySessionManager(privacy_storage_dir)
+            
+            # Initialize Milestone 3 Privacy Enhancements
+            self._initialize_enhanced_privacy(enable_encryption, enable_audit_logging, privacy_storage_dir)
+            
+            # Create default privacy session
+            if not hasattr(self, 'privacy_session_id') or not self.privacy_session_id:
+                self.privacy_session_id = self.session_manager.create_session("balanced")
             
         except FileNotFoundError as e:
             logger.error(f"Configuration file not found: {e}")
@@ -76,7 +104,526 @@ class KnowledgeBaseManager:
         except Exception as e:
             logger.error(f"Initialization error: {e}")
             raise KnowledgeBaseError(f"Failed to initialize knowledge base manager: {e}")
+    
+    def _initialize_enhanced_privacy(self, enable_encryption: bool, 
+                                   enable_audit_logging: bool, 
+                                   privacy_storage_dir: str = None) -> None:
+        """Initialize Milestone 3 privacy enhancements."""
+        try:
+            # Set up privacy storage directory
+            privacy_dir = privacy_storage_dir or (Path.home() / ".kb_privacy")
+            
+            # 1. End-to-End Encryption
+            if enable_encryption:
+                self.key_manager = KeyManager(str(privacy_dir / "keys"))
+                self.encryption_manager = ContentEncryptionManager(self.key_manager)
+                self.encrypted_storage = EncryptedStorageAdapter(
+                    self.encryption_manager, 
+                    str(self.base_path / "data")
+                )
+            else:
+                self.key_manager = None
+                self.encryption_manager = None
+                self.encrypted_storage = None
+            
+            # 2. Granular Privacy Controls
+            self.privacy_control_manager = PrivacyControlManager(str(privacy_dir))
+            
+            # Create default profiles for different content types
+            default_profiles = create_default_content_profiles()
+            for content_type, profile in default_profiles.items():
+                self.privacy_control_manager.rule_engine.add_profile(profile)
+            
+            # 3. Privacy Audit Logging
+            if enable_audit_logging:
+                self.audit_logger = PrivacyAuditLogger(str(privacy_dir / "audit_logs"))
+                self.compliance_reporter = ComplianceReporter(self.audit_logger)
+            else:
+                self.audit_logger = None
+                self.compliance_reporter = None
+            
+            # 4. Differential Privacy Analytics
+            self.privacy_analytics = PrivacyPreservingAnalytics()
+            
+            # 5. Privacy Certification Framework
+            self.compliance_checker = ComplianceChecker(str(privacy_dir / "compliance"))
+            self.pia_tool = PrivacyImpactAssessmentTool(str(privacy_dir / "pia"))
+            self.certification_reporter = CertificationReporter(
+                self.compliance_checker, 
+                self.pia_tool
+            )
+            
+            logger.info("Enhanced privacy features initialized successfully")
+            
+        except Exception as e:
+            logger.error(f"Error initializing enhanced privacy: {e}")
+            # Set components to None if initialization fails
+            self.key_manager = None
+            self.encryption_manager = None
+            self.encrypted_storage = None
+            self.privacy_control_manager = None
+            self.audit_logger = None
+            self.compliance_reporter = None
+            self.privacy_analytics = None
+            self.compliance_checker = None
+            self.pia_tool = None
+            self.certification_reporter = None
+            
+            logger.warning("Enhanced privacy features disabled due to initialization error")
+    
+    # Enhanced Privacy Methods for Milestone 3
+    
+    def encrypt_content(self, content: Union[str, Dict[str, Any]], 
+                       searchable_fields: List[str] = None) -> Dict[str, Any]:
+        """
+        Encrypt content while preserving searchable fields.
         
+        Args:
+            content: Content to encrypt
+            searchable_fields: Fields to keep searchable
+            
+        Returns:
+            Encrypted content metadata
+        """
+        if not self.encryption_manager:
+            raise PrivacyError("Encryption not enabled")
+            
+        try:
+            if isinstance(content, dict):
+                # Handle structured content
+                if searchable_fields:
+                    encrypted_data = self.encryption_manager.encrypt_searchable_content(
+                        content, searchable_fields
+                    )
+                else:
+                    # Encrypt entire content
+                    encrypted_result = self.encryption_manager.encrypt_content(
+                        json.dumps(content).encode('utf-8')
+                    )
+                    encrypted_data = {
+                        "_encrypted": encrypted_result.to_dict(),
+                        "_metadata": {
+                            "has_encrypted_data": True,
+                            "encryption_type": "full",
+                            "created_at": datetime.now().isoformat()
+                        }
+                    }
+            else:
+                # Handle string content
+                encrypted_result = self.encryption_manager.encrypt_content(content)
+                encrypted_data = {
+                    "_encrypted": encrypted_result.to_dict(),
+                    "_metadata": {
+                        "has_encrypted_data": True,
+                        "encryption_type": "full",
+                        "created_at": datetime.now().isoformat()
+                    }
+                }
+            
+            # Log encryption operation
+            if self.audit_logger:
+                self.audit_logger.log_operation(
+                    operation=PrivacyOperation.ENCRYPTION,
+                    impact_level=PrivacyImpact.HIGH,
+                    details={
+                        "content_type": type(content).__name__,
+                        "encryption_type": encrypted_data["_metadata"]["encryption_type"],
+                        "searchable_fields": searchable_fields or []
+                    }
+                )
+            
+            return encrypted_data
+            
+        except Exception as e:
+            logger.error(f"Error encrypting content: {e}")
+            raise PrivacyError(f"Encryption failed: {e}")
+    
+    def decrypt_content(self, encrypted_data: Dict[str, Any]) -> Union[str, Dict[str, Any]]:
+        """
+        Decrypt encrypted content.
+        
+        Args:
+            encrypted_data: Encrypted content data
+            
+        Returns:
+            Decrypted content
+        """
+        if not self.encryption_manager:
+            raise PrivacyError("Encryption not enabled")
+            
+        try:
+            if "_encrypted" in encrypted_data:
+                # Handle fully encrypted content
+                from knowledge_base.privacy.encryption import EncryptionResult
+                encrypted_result = EncryptionResult.from_dict(encrypted_data["_encrypted"])
+                decrypted_bytes = self.encryption_manager.decrypt_content(encrypted_result)
+                
+                # Try to parse as JSON first
+                try:
+                    return json.loads(decrypted_bytes.decode('utf-8'))
+                except json.JSONDecodeError:
+                    return decrypted_bytes.decode('utf-8')
+            else:
+                # Handle searchable encrypted content
+                return self.encryption_manager.decrypt_searchable_content(encrypted_data)
+            
+        except Exception as e:
+            logger.error(f"Error decrypting content: {e}")
+            raise PrivacyError(f"Decryption failed: {e}")
+    
+    def set_content_privacy(self, content_id: str, privacy_level: PrivacyLevel,
+                          inherit_from: str = None, override_parent: bool = False) -> Dict[str, Any]:
+        """
+        Set privacy settings for content.
+        
+        Args:
+            content_id: Content ID
+            privacy_level: Privacy level to set
+            inherit_from: Parent content ID for inheritance
+            override_parent: Whether to override parent settings
+            
+        Returns:
+            Privacy settings
+        """
+        if not self.privacy_control_manager:
+            raise PrivacyError("Privacy controls not enabled")
+            
+        try:
+            settings = self.privacy_control_manager.set_content_privacy(
+                content_id=content_id,
+                privacy_level=privacy_level,
+                inherit_from=inherit_from,
+                override_parent=override_parent
+            )
+            
+            # Log privacy settings change
+            if self.audit_logger:
+                self.audit_logger.log_operation(
+                    operation=PrivacyOperation.SETTINGS,
+                    impact_level=PrivacyImpact.MEDIUM,
+                    content_id=content_id,
+                    details={
+                        "privacy_level": privacy_level.value,
+                        "inherit_from": inherit_from,
+                        "override_parent": override_parent
+                    }
+                )
+            
+            return settings.to_dict()
+            
+        except Exception as e:
+            logger.error(f"Error setting content privacy: {e}")
+            raise PrivacyError(f"Failed to set privacy: {e}")
+    
+    def get_private_analytics(self, query_type: str, data: Any, 
+                            epsilon: float = 0.1) -> Dict[str, Any]:
+        """
+        Get privacy-preserving analytics.
+        
+        Args:
+            query_type: Type of analytics query
+            data: Data to analyze
+            epsilon: Privacy parameter
+            
+        Returns:
+            Privacy-preserving analytics results
+        """
+        if not self.privacy_analytics:
+            raise PrivacyError("Privacy analytics not enabled")
+            
+        try:
+            # Create analytics budget
+            budget_id = self.privacy_analytics.create_analytics_budget(
+                total_epsilon=1.0,
+                purpose=f"analytics_{query_type}"
+            )
+            
+            # Perform privacy-preserving query
+            if query_type == "count":
+                result = self.privacy_analytics.count_with_privacy(
+                    count=data,
+                    budget_id=budget_id,
+                    epsilon=epsilon
+                )
+            elif query_type == "stats":
+                result = self.privacy_analytics.get_private_stats(
+                    values=data,
+                    budget_id=budget_id,
+                    epsilon=epsilon
+                )
+            elif query_type == "histogram":
+                result = self.privacy_analytics.get_private_histogram(
+                    data=data,
+                    budget_id=budget_id,
+                    epsilon=epsilon
+                )
+            else:
+                raise ValueError(f"Unsupported query type: {query_type}")
+            
+            # Log analytics operation
+            if self.audit_logger:
+                self.audit_logger.log_operation(
+                    operation=PrivacyOperation.ANALYTICS,
+                    impact_level=PrivacyImpact.LOW,
+                    details={
+                        "query_type": query_type,
+                        "epsilon": epsilon,
+                        "budget_id": budget_id
+                    }
+                )
+            
+            return {
+                "result": result,
+                "budget_id": budget_id,
+                "epsilon_used": epsilon,
+                "privacy_preserved": True
+            }
+            
+        except BudgetExhaustedException as e:
+            logger.error(f"Privacy budget exhausted: {e}")
+            raise PrivacyError(f"Privacy budget exhausted: {e}")
+        except Exception as e:
+            logger.error(f"Error in private analytics: {e}")
+            raise PrivacyError(f"Analytics failed: {e}")
+    
+    def assess_compliance(self, standard: ComplianceStandard, 
+                         evidence: Dict[str, Any] = None) -> Dict[str, Any]:
+        """
+        Assess compliance against a privacy standard.
+        
+        Args:
+            standard: Compliance standard to assess
+            evidence: Evidence for compliance
+            
+        Returns:
+            Compliance assessment results
+        """
+        if not self.compliance_checker:
+            raise PrivacyError("Compliance checker not enabled")
+            
+        try:
+            # Assess compliance
+            assessments = self.compliance_checker.assess_compliance(standard, evidence)
+            
+            # Generate gap analysis
+            gap_analysis = self.compliance_checker.generate_gap_analysis(assessments)
+            
+            # Log compliance assessment
+            if self.audit_logger:
+                self.audit_logger.log_operation(
+                    operation=PrivacyOperation.COMPLIANCE,
+                    impact_level=PrivacyImpact.HIGH,
+                    details={
+                        "standard": standard.value,
+                        "compliance_score": gap_analysis["summary"]["compliance_score"],
+                        "total_requirements": gap_analysis["summary"]["total_requirements"]
+                    }
+                )
+            
+            return {
+                "standard": standard.value,
+                "assessments": {req_id: assessment.to_dict() 
+                              for req_id, assessment in assessments.items()},
+                "gap_analysis": gap_analysis,
+                "assessed_at": datetime.now().isoformat()
+            }
+            
+        except Exception as e:
+            logger.error(f"Error assessing compliance: {e}")
+            raise PrivacyError(f"Compliance assessment failed: {e}")
+    
+    def create_privacy_impact_assessment(self, title: str, scope: str,
+                                       data_categories: List[str],
+                                       processing_purposes: List[str],
+                                       legal_basis: List[str]) -> Dict[str, Any]:
+        """
+        Create a Privacy Impact Assessment.
+        
+        Args:
+            title: PIA title
+            scope: Assessment scope
+            data_categories: Data categories involved
+            processing_purposes: Purposes for processing
+            legal_basis: Legal basis for processing
+            
+        Returns:
+            Created PIA
+        """
+        if not self.pia_tool:
+            raise PrivacyError("PIA tool not enabled")
+            
+        try:
+            pia = self.pia_tool.create_pia(
+                title=title,
+                scope=scope,
+                data_categories=data_categories,
+                processing_purposes=processing_purposes,
+                legal_basis=legal_basis
+            )
+            
+            # Log PIA creation
+            if self.audit_logger:
+                self.audit_logger.log_operation(
+                    operation=PrivacyOperation.COMPLIANCE,
+                    impact_level=PrivacyImpact.HIGH,
+                    details={
+                        "action": "pia_created",
+                        "pia_id": pia.pia_id,
+                        "risk_level": pia.risk_assessment["risk_level"]
+                    }
+                )
+            
+            return pia.to_dict()
+            
+        except Exception as e:
+            logger.error(f"Error creating PIA: {e}")
+            raise PrivacyError(f"PIA creation failed: {e}")
+    
+    def generate_certification_report(self, standard: ComplianceStandard,
+                                    evidence: Dict[str, Any] = None) -> Dict[str, Any]:
+        """
+        Generate a comprehensive certification report.
+        
+        Args:
+            standard: Compliance standard
+            evidence: Evidence for assessment
+            
+        Returns:
+            Certification report
+        """
+        if not self.certification_reporter:
+            raise PrivacyError("Certification reporter not enabled")
+            
+        try:
+            report = self.certification_reporter.generate_certification_report(
+                standard=standard,
+                evidence=evidence
+            )
+            
+            # Log certification report generation
+            if self.audit_logger:
+                self.audit_logger.log_operation(
+                    operation=PrivacyOperation.COMPLIANCE,
+                    impact_level=PrivacyImpact.HIGH,
+                    details={
+                        "action": "certification_report_generated",
+                        "standard": standard.value,
+                        "certification_status": report["certification_status"]["status"]
+                    }
+                )
+            
+            return report
+            
+        except Exception as e:
+            logger.error(f"Error generating certification report: {e}")
+            raise PrivacyError(f"Certification report generation failed: {e}")
+    
+    def get_audit_logs(self, start_time: datetime = None, end_time: datetime = None,
+                      operations: List[PrivacyOperation] = None) -> List[Dict[str, Any]]:
+        """
+        Get privacy audit logs.
+        
+        Args:
+            start_time: Start time for logs
+            end_time: End time for logs  
+            operations: Operations to filter by
+            
+        Returns:
+            List of audit log entries
+        """
+        if not self.audit_logger:
+            raise PrivacyError("Audit logging not enabled")
+            
+        try:
+            entries = self.audit_logger.query_logs(
+                start_time=start_time,
+                end_time=end_time,
+                operations=operations
+            )
+            
+            return [entry.to_dict() for entry in entries]
+            
+        except Exception as e:
+            logger.error(f"Error retrieving audit logs: {e}")
+            raise PrivacyError(f"Audit log retrieval failed: {e}")
+    
+    # Enhanced versions of existing methods with privacy integration
+    
+    def save_content_with_privacy(self, content_data: Dict[str, Any], content_type: str,
+                                privacy_level: PrivacyLevel = PrivacyLevel.PROTECTED,
+                                encrypt: bool = False) -> str:
+        """
+        Save content with privacy controls and optional encryption.
+        
+        Args:
+            content_data: Content to save
+            content_type: Type of content
+            privacy_level: Privacy level for the content
+            encrypt: Whether to encrypt the content
+            
+        Returns:
+            Path to saved content
+        """
+        try:
+            # Generate content ID
+            content_id = content_data.get('id', generate_id())
+            
+            # Apply privacy controls
+            if self.privacy_control_manager:
+                # Evaluate and apply privacy settings
+                privacy_controlled_content = self.privacy_control_manager.apply_privacy_controls(
+                    content_id, content_data
+                )
+            else:
+                privacy_controlled_content = content_data
+            
+            # Set privacy level
+            if self.privacy_control_manager:
+                self.set_content_privacy(content_id, privacy_level)
+            
+            # Encrypt if required or requested
+            if encrypt and self.encryption_manager:
+                # Determine searchable fields based on content type
+                searchable_fields = []
+                if content_type == "note":
+                    searchable_fields = ["title", "tags", "category"]
+                elif content_type == "todo":
+                    searchable_fields = ["title", "status", "priority"]
+                elif content_type == "calendar":
+                    searchable_fields = ["title", "category"]
+                
+                encrypted_content = self.encrypt_content(
+                    privacy_controlled_content, 
+                    searchable_fields
+                )
+                content_to_save = encrypted_content
+            else:
+                content_to_save = privacy_controlled_content
+            
+            # Save content using original method
+            filepath = self.save_content(content_to_save, content_type)
+            
+            # Log the operation
+            if self.audit_logger:
+                self.audit_logger.log_operation(
+                    operation=PrivacyOperation.MODIFICATION,
+                    impact_level=PrivacyImpact.MEDIUM,
+                    content_id=content_id,
+                    details={
+                        "action": "content_saved",
+                        "content_type": content_type,
+                        "privacy_level": privacy_level.value,
+                        "encrypted": encrypt,
+                        "filepath": filepath
+                    }
+                )
+            
+            return filepath
+            
+        except Exception as e:
+            logger.error(f"Error saving content with privacy: {e}")
+            raise PrivacyError(f"Failed to save content with privacy: {e}")
+    
     def process_stream_of_consciousness(self, content: str) -> Dict[str, Any]:
         """
         Process stream of consciousness input and organize intelligently.
