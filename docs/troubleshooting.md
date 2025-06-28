@@ -191,6 +191,62 @@ If you're experiencing performance issues:
 
 For more help with performance issues, refer to [performance_optimization.md](./performance_optimization.md).
 
+## Web Interface Issues
+
+### 1. Frontend Runtime Errors
+
+**Symptoms:**
+- Blank pages or screens
+- Error messages in browser console
+- Animations not working correctly
+- Pages fail to render completely
+
+**Solutions:**
+- Check browser console for specific error messages
+- Verify that the backend server is running and accessible
+- Clear browser cache and reload the page
+- Ensure all required dependencies are installed
+
+### 2. Animation and Transition Issues
+
+**Symptoms:**
+- Error: `Invalid easing type 'cubic-bezier(0.4, 0, 0.2, 1)'`
+- Pages fail to transition smoothly
+- Components appear without animation
+
+**Solutions:**
+- Ensure animation easing values are in the correct format (arrays for framer-motion)
+- Check that the `PageTransition` component is properly configured
+- Verify that `framer-motion` library is correctly installed
+
+### 3. Backend Connection Problems
+
+**Symptoms:**
+- 404 Not Found errors in console
+- API endpoints not responding
+- Data not loading in the interface
+
+**Solutions:**
+- Check if the backend server is running on the expected port
+- Verify that the API endpoints match what the frontend expects
+- Ensure sample data exists for testing
+- Check for port conflicts with other applications
+
+### 4. Infinite Loading Screens
+
+**Symptoms:**
+- Loading spinner never completes
+- Application appears to start but never shows content
+- Backend logs show connection attempts
+
+**Solutions:**
+- Check for port conflicts using `lsof -i :<port_number>`
+- Kill any lingering processes using the required ports
+- Restart both frontend and backend servers
+- Verify that authentication is working correctly
+
+For detailed information about recent fixes to these issues, see our [Troubleshooting Fixes Summary](../development/records/TROUBLESHOOTING_FIXES_SUMMARY.md).
+
 ## Getting More Help
 
 If you're unable to resolve an issue using this guide, you can:

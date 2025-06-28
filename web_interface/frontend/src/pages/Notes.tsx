@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -9,8 +9,6 @@ import {
   TextField,
   InputAdornment,
   IconButton,
-  Tabs,
-  Tab,
   Menu,
   MenuItem,
   Chip,
@@ -22,14 +20,14 @@ import {
   InputLabel,
   Select,
   Divider,
-  Stack
+  Stack,
+  ListItemIcon
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import SearchIcon from '@mui/icons-material/Search';
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import SortIcon from '@mui/icons-material/Sort';
@@ -43,17 +41,7 @@ import LoadingSpinner from '../components/ui/LoadingSpinner';
 import api from '../services/api';
 
 // Types
-interface NoteItem {
-  id: string;
-  title: string;
-  content: string;
-  category: string;
-  tags: string[];
-  created: string;
-  modified: string;
-  type: string;
-  _content_type: string;
-}
+import { NoteContent as NoteItem, BaseContent } from '../types';
 
 interface NoteFilters {
   category?: string;
@@ -87,19 +75,7 @@ const NotesPage: React.FC = () => {
     tags: [] as string[]
   });
   
-  // Load notes on component mount
-  useEffect(() => {
-    fetchNotes();
-  }, []);
-  
-  // Re-fetch when filters change
-  useEffect(() => {
-    if (!loading) {
-      fetchNotes();
-    }
-  }, [filters]);
-  
-  const fetchNotes = async () => {
+  const fetchNotes = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -111,19 +87,19 @@ const NotesPage: React.FC = () => {
       
       // Apply filters
       if (filters.category) {
-        filteredNotes = filteredNotes.filter(note => 
+        filteredNotes = filteredNotes.filter((note: NoteItem) => 
           note.category?.toLowerCase() === filters.category?.toLowerCase()
         );
       }
       
       if (filters.tags && filters.tags.length > 0) {
-        filteredNotes = filteredNotes.filter(note => 
+        filteredNotes = filteredNotes.filter((note: NoteItem) => 
           filters.tags?.some(tag => note.tags?.includes(tag))
         );
       }
       
       // Apply sorting
-      filteredNotes.sort((a, b) => {
+      filteredNotes.sort((a: NoteItem, b: NoteItem) => {
         const aValue = a[filters.sortBy];
         const bValue = b[filters.sortBy];
         
@@ -143,7 +119,12 @@ const NotesPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
+  
+  // Load notes on component mount
+  useEffect(() => {
+    fetchNotes();
+  }, [fetchNotes]);
   
   const handleSearch = () => {
     if (!searchQuery.trim()) {
@@ -154,8 +135,8 @@ const NotesPage: React.FC = () => {
     // Filter notes client-side for quick searches
     const filtered = notes.filter(note => 
       note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      note.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      note.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+      (note.content && note.content.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (note.tags && note.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())))
     );
     
     setNotes(filtered);
@@ -212,23 +193,16 @@ const NotesPage: React.FC = () => {
     navigate(`/content/${id}`);
   };
   
-  const handleActionClick = (event: React.MouseEvent, id: string) => {
+  const handleActionClick = (event: React.MouseEvent<HTMLButtonElement>, id: string) => {
     setActionMenuAnchor(event.currentTarget);
     setSelectedNoteId(id);
-  };
-  
-  const handleTagClick = (tag: string) => {
-    setFilters({
-      ...filters,
-      tags: [tag]
-    });
   };
   
   const filteredNotes = searchQuery
     ? notes.filter(note => 
         note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        note.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        note.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+        (note.content && note.content.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (note.tags && note.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase())))
       )
     : notes;
   
@@ -372,7 +346,7 @@ const NotesPage: React.FC = () => {
           {filteredNotes.map(note => (
             <Grid item xs={12} sm={6} md={4} key={note.id}>
               <ContentCard 
-                content={note}
+                content={note as unknown as BaseContent}
                 onClick={() => handleNoteClick(note.id)}
                 onActionClick={(e) => handleActionClick(e, note.id)}
               />
@@ -386,9 +360,9 @@ const NotesPage: React.FC = () => {
               id: note.id,
               title: note.title,
               type: 'note',
-              description: note.content,
-              date: new Date(note.modified).toLocaleDateString(),
-              tags: note.tags
+              description: note.content || '',
+              date: note.modified ? new Date(note.modified).toLocaleDateString() : '',
+              tags: note.tags || []
             }))}
             onItemClick={handleNoteClick}
             onActionClick={(e, id) => handleActionClick(e, id)}

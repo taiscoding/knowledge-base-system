@@ -94,9 +94,9 @@ export const RESPONSIVE = {
       slow: '0.5s'
     },
     easing: {
-      smooth: 'cubic-bezier(0.4, 0, 0.2, 1)',
-      accelerate: 'cubic-bezier(0.4, 0, 1, 1)',
-      decelerate: 'cubic-bezier(0, 0, 0.2, 1)'
+      smooth: [0.4, 0, 0.2, 1],
+      accelerate: [0.4, 0, 1, 1],
+      decelerate: [0, 0, 0.2, 1]
     }
   }
 }; 

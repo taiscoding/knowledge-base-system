@@ -12,24 +12,19 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Tabs,
   Tab,
   Stack,
-  Chip
+  Chip,
+  Divider
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import TodayIcon from '@mui/icons-material/Today';
-import EventIcon from '@mui/icons-material/Event';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
 import ViewAgendaIcon from '@mui/icons-material/ViewAgenda';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import CalendarViewWeekIcon from '@mui/icons-material/CalendarViewWeek';
@@ -37,7 +32,7 @@ import CalendarViewDayIcon from '@mui/icons-material/CalendarViewDay';
 
 import { format, addMonths, addWeeks, addDays, startOfMonth, endOfMonth, 
          startOfWeek, endOfWeek, eachDayOfInterval, isSameMonth, isSameDay,
-         differenceInMinutes, parse, parseISO } from 'date-fns';
+         parseISO } from 'date-fns';
 
 // Components
 import LoadingSpinner from '../components/ui/LoadingSpinner';
@@ -236,8 +231,8 @@ const CalendarPage: React.FC = () => {
     const days = eachDayOfInterval({ start: startDate, end: endDate });
     
     // Create rows of 7 days
-    const rows = [];
-    let cells = [];
+    const rows: React.ReactNode[] = [];
+    let cells: React.ReactNode[] = [];
     
     days.forEach((day, i) => {
       cells.push(

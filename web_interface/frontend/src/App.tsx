@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { AnimatePresence } from 'framer-motion';
+
+// Auth Context
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 
 // Layouts
 import MainLayout from './layouts/MainLayout';
 
 // Pages
+import Login from './pages/Login';
+import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Notes from './pages/Notes';
 import Todos from './pages/Todos';
@@ -20,6 +24,7 @@ import Graph from './pages/Graph';
 import Settings from './pages/Settings';
 import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
+import OrganizationPage from './pages/Organization';
 
 // Components
 import PageTransition from './components/ui/PageTransition';
@@ -76,6 +81,28 @@ const theme = createTheme({
   },
 });
 
+// Protected Route Component
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+}
+
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
+  
+  if (isLoading) {
+    // You could render a loading spinner here
+    return <div>Loading...</div>;
+  }
+  
+  if (!isAuthenticated) {
+    // Redirect to login page but save the current location
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+  
+  return <>{children}</>;
+};
+
 // Wrap page components with PageTransition
 const TransitionPage = ({ Component, transitionType }: { Component: React.ComponentType<any>; transitionType?: 'fade' | 'slide' | 'scale' | 'none' }) => (
   <PageTransition transitionType={transitionType}>
@@ -83,7 +110,7 @@ const TransitionPage = ({ Component, transitionType }: { Component: React.Compon
   </PageTransition>
 );
 
-const App: React.FC = () => {
+const AppRoutes: React.FC = () => {
   const [mounted, setMounted] = useState(false);
 
   // Set mounted state on initial render
@@ -93,60 +120,78 @@ const App: React.FC = () => {
   }, []);
   
   return (
+    <Routes>
+      {/* Public routes */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      
+      {/* Protected routes */}
+      <Route path="/" element={
+        <ProtectedRoute>
+          <MainLayout />
+        </ProtectedRoute>
+      }>
+        {/* Redirect root to dashboard */}
+        <Route index element={<Navigate to="/dashboard" replace />} />
+        
+        {/* Main routes */}
+        <Route path="dashboard" element={
+          mounted ? <TransitionPage Component={Dashboard} transitionType="fade" /> : <Dashboard />
+        } />
+        <Route path="notes" element={
+          mounted ? <TransitionPage Component={Notes} transitionType="slide" /> : <Notes />
+        } />
+        <Route path="todos" element={
+          mounted ? <TransitionPage Component={Todos} transitionType="slide" /> : <Todos />
+        } />
+        <Route path="calendar" element={
+          mounted ? <TransitionPage Component={Calendar} transitionType="slide" /> : <Calendar />
+        } />
+        <Route path="nlp" element={
+          mounted ? <TransitionPage Component={NaturalLanguage} transitionType="slide" /> : <NaturalLanguage />
+        } />
+        <Route path="graph" element={
+          mounted ? <TransitionPage Component={Graph} transitionType="scale" /> : <Graph />
+        } />
+        <Route path="settings" element={
+          mounted ? <TransitionPage Component={Settings} transitionType="fade" /> : <Settings />
+        } />
+        <Route path="profile" element={
+          mounted ? <TransitionPage Component={Profile} transitionType="fade" /> : <Profile />
+        } />
+        <Route path="organization" element={
+          mounted ? <TransitionPage Component={OrganizationPage} transitionType="slide" /> : <OrganizationPage />
+        } />
+        
+        {/* Content routes */}
+        <Route path="content/:id" element={
+          mounted ? <TransitionPage Component={ContentView} transitionType="fade" /> : <ContentView />
+        } />
+        <Route path="content/:id/edit" element={
+          mounted ? <TransitionPage Component={ContentEdit} transitionType="fade" /> : <ContentEdit />
+        } />
+        
+        {/* Search route */}
+        <Route path="search" element={
+          mounted ? <TransitionPage Component={Search} transitionType="fade" /> : <Search />
+        } />
+        
+        {/* Catch all */}
+        <Route path="*" element={
+          mounted ? <TransitionPage Component={NotFound} transitionType="fade" /> : <NotFound />
+        } />
+      </Route>
+    </Routes>
+  );
+};
+
+const App: React.FC = () => {
+  return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<MainLayout />}>
-            {/* Redirect root to dashboard */}
-            <Route index element={<Navigate to="/dashboard" replace />} />
-            
-            {/* Main routes */}
-            <Route path="dashboard" element={
-              mounted ? <TransitionPage Component={Dashboard} transitionType="fade" /> : <Dashboard />
-            } />
-            <Route path="notes" element={
-              mounted ? <TransitionPage Component={Notes} transitionType="slide" /> : <Notes />
-            } />
-            <Route path="todos" element={
-              mounted ? <TransitionPage Component={Todos} transitionType="slide" /> : <Todos />
-            } />
-            <Route path="calendar" element={
-              mounted ? <TransitionPage Component={Calendar} transitionType="slide" /> : <Calendar />
-            } />
-            <Route path="nlp" element={
-              mounted ? <TransitionPage Component={NaturalLanguage} transitionType="slide" /> : <NaturalLanguage />
-            } />
-            <Route path="graph" element={
-              mounted ? <TransitionPage Component={Graph} transitionType="scale" /> : <Graph />
-            } />
-            <Route path="settings" element={
-              mounted ? <TransitionPage Component={Settings} transitionType="fade" /> : <Settings />
-            } />
-            <Route path="profile" element={
-              mounted ? <TransitionPage Component={Profile} transitionType="fade" /> : <Profile />
-            } />
-            
-            {/* Content routes */}
-            <Route path="content/:id" element={
-              mounted ? <TransitionPage Component={ContentView} transitionType="fade" /> : <ContentView />
-            } />
-            <Route path="content/:id/edit" element={
-              mounted ? <TransitionPage Component={ContentEdit} transitionType="fade" /> : <ContentEdit />
-            } />
-            
-            {/* Search route */}
-            <Route path="search" element={
-              mounted ? <TransitionPage Component={Search} transitionType="fade" /> : <Search />
-            } />
-            
-            {/* Catch all */}
-            <Route path="*" element={
-              mounted ? <TransitionPage Component={NotFound} transitionType="fade" /> : <NotFound />
-            } />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+      </AuthProvider>
     </ThemeProvider>
   );
 };
